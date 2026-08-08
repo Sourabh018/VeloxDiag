@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Typography, TextField, Button, Paper, CircularProgress, IconButton } from "@mui/material";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import Header from "../components/Header";
 import useBusinessContext from "../hooks/useBusinessContext";
 import { useSelectedApp } from "../contexts/AppContext";
