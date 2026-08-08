@@ -43,7 +43,9 @@ function Diagnosis() {
             No issues detected. The engine scans telemetry for slow requests, high error rates, and server errors.
           </Typography>
         ) : (
-          findings.map((finding, i) => <FindingCard key={i} finding={finding} />)
+          findings.map((finding, i) => (
+            <FindingCard key={i} finding={finding} applicationName={selectedApp} />
+          ))
         )}
       </Box>
     </>

@@ -108,7 +108,7 @@ function ConfidenceTag({ confidence }) {
 
 const NO_SUGGESTION_TYPES = ["HIGH_ERROR_RATE", "SERVER_ERROR", "ROOT_CAUSE_CORRELATION"];
 
-function FindingCard({ finding, showExplain = true, showSuggestion = false, autoFetchSuggestion = false, fetchDelayMs = 0, compact = false }) {
+function FindingCard({ finding, applicationName, showExplain = true, showSuggestion = false, autoFetchSuggestion = false, fetchDelayMs = 0, compact = false }) {
   const { ruleType, severity, endpoint, message, evidence, relatedFindings, confidence } = finding;
   const isCorrelation = ruleType === "ROOT_CAUSE_CORRELATION";
   const isCustomRule = !(ruleType in ruleTypeLabel) && !isCorrelation;
@@ -129,6 +129,33 @@ function FindingCard({ finding, showExplain = true, showSuggestion = false, auto
   const [suggestion, setSuggestion] = useState(null);
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [suggestionError, setSuggestionError] = useState(null);
+
+  // "Mark as Fixed" — see FixTrackingService on the backend. Not offered for
+  // correlation/custom-rule cards, since those don't represent one concrete
+  // addressable issue the same way a single rule finding does.
+  const [fixExpanded, setFixExpanded] = useState(false);
+  const [fixNote, setFixNote] = useState("");
+  const [fixSaving, setFixSaving] = useState(false);
+  const [fixSaved, setFixSaved] = useState(false);
+  const [fixError, setFixError] = useState(null);
+  const canMarkFixed = !isCorrelation;
+
+  async function handleMarkFixed() {
+    if (!applicationName || !endpoint || !ruleType) return;
+    setFixSaving(true);
+    setFixError(null);
+    try {
+      await apiClient.post("/api/fixes", null, {
+        params: { applicationName, endpoint, ruleType, note: fixNote || undefined },
+      });
+      setFixSaved(true);
+      setFixExpanded(false);
+    } catch (err) {
+      setFixError(err.message ?? "Failed to mark as fixed");
+    } finally {
+      setFixSaving(false);
+    }
+  }
 
   async function handleToggleplans() {
     if (plansExpanded) {
@@ -164,7 +191,7 @@ function FindingCard({ finding, showExplain = true, showSuggestion = false, auto
     setNarrativeError(null);
     try {
       const res = await apiClient.get("/api/diagnosis/narrative", {
-        params: { endpoint },
+        params: { endpoint, applicationName },
       });
       setNarrative(res.data.narrative);
     } catch (err) {
@@ -443,6 +470,67 @@ function FindingCard({ finding, showExplain = true, showSuggestion = false, auto
                 </Paper>
               ))}
             </Box>
+          )}
+        </Box>
+      )}
+
+      {canMarkFixed && !compact && (
+        <Box sx={{ marginTop: 1.5 }}>
+          {fixSaved ? (
+            <Typography sx={{ fontSize: 12.5, color: "#8FD9A8" }}>
+              ✓ Marked as fixed — track it on the Fixes page
+            </Typography>
+          ) : (
+            <>
+              <Button
+                size="small"
+                variant="text"
+                onClick={() => setFixExpanded((v) => !v)}
+                sx={{ fontSize: 12.5, textTransform: "none", color: "#8FD9A8", padding: 0, minWidth: 0 }}
+              >
+                {fixExpanded ? "Cancel" : "Mark as Fixed"}
+              </Button>
+
+              {fixExpanded && (
+                <Box sx={{ marginTop: 1, display: "flex", gap: 1, alignItems: "flex-start" }}>
+                  <input
+                    type="text"
+                    placeholder="Optional note, e.g. added JOIN FETCH"
+                    value={fixNote}
+                    onChange={(e) => setFixNote(e.target.value)}
+                    style={{
+                      flex: 1,
+                      background: "#0C0C0E",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 6,
+                      padding: "6px 10px",
+                      color: "#EDEDEF",
+                      fontSize: 13,
+                      outline: "none",
+                    }}
+                  />
+                  <Button
+                    size="small"
+                    onClick={handleMarkFixed}
+                    disabled={fixSaving}
+                    sx={{
+                      textTransform: "none",
+                      fontSize: 12.5,
+                      color: "#EDEDEF",
+                      backgroundColor: "rgba(143,217,168,0.1)",
+                      border: "1px solid rgba(143,217,168,0.25)",
+                      padding: "6px 14px",
+                      "&:hover": { backgroundColor: "rgba(143,217,168,0.18)" },
+                    }}
+                  >
+                    {fixSaving ? "Saving..." : "Confirm"}
+                  </Button>
+                </Box>
+              )}
+              {fixError && (
+                <Typography sx={{ fontSize: 12, color: "#F5A3A3", marginTop: 0.5 }}>{fixError}</Typography>
+              )}
+            </>
           )}
         </Box>
       )}
