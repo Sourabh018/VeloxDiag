@@ -237,17 +237,41 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
     await fetchSuggestion();
   }
 
+  const reopenedInfo = finding.reopenedInfo;
+
   return (
     <Paper
       variant="outlined"
       sx={{
         padding: "16px 18px",
         marginBottom: 1.25,
-        borderColor: isCorrelation ? "rgba(91,124,255,0.18)" : "rgba(255,255,255,0.07)",
+        borderColor: reopenedInfo
+          ? "rgba(229,72,77,0.3)"
+          : isCorrelation ? "rgba(91,124,255,0.18)" : "rgba(255,255,255,0.07)",
         borderRadius: "10px",
         backgroundColor: "#111113",
       }}
     >
+      {reopenedInfo && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            backgroundColor: "rgba(229,72,77,0.1)",
+            border: "1px solid rgba(229,72,77,0.25)",
+            borderRadius: "6px",
+            padding: "6px 10px",
+            marginBottom: 1.5,
+          }}
+        >
+          <Typography sx={{ fontSize: 12.5, color: "#F5A3A3" }}>
+            ⚠ This was marked fixed on {new Date(reopenedInfo.markedFixedAt).toLocaleDateString()}
+            {reopenedInfo.note ? ` ("${reopenedInfo.note}")` : ""} — it's back. See the Fixes page for details.
+          </Typography>
+        </Box>
+      )}
+
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 1 }}>
         <Typography sx={{ fontFamily: "ui-monospace, monospace", fontSize: 14, color: "#EDEDEF" }}>
           {endpoint}

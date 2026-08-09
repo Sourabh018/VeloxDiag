@@ -113,11 +113,17 @@ function FixCard({ fix }) {
         )}
 
         {!hasVerdict && fix.status === "WATCHING" && (
-          <Typography sx={{ marginLeft: "auto", fontSize: 12.5, color: "#6B7280" }}>
-            Waiting for more traffic since the fix to give a verdict.
+          <Typography sx={{ marginLeft: "auto", fontSize: 12.5, color: "#6B7280", maxWidth: 260, textAlign: "right" }}>
+            {fix.verdictNote || "Waiting for more traffic since the fix to give a verdict."}
           </Typography>
         )}
       </Box>
+
+      {fix.status === "NO_CHANGE" && fix.verdictNote && (
+        <Typography sx={{ fontSize: 12, color: "#6B7280", marginTop: 1, fontStyle: "italic" }}>
+          {fix.verdictNote}
+        </Typography>
+      )}
     </Paper>
   );
 }
