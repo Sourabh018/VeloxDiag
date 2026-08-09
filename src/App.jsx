@@ -3,6 +3,7 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "./theme";
 import Sidebar from "./components/Sidebar";
 import LoginGate from "./components/LoginGate";
+import AppGate from "./components/AppGate";
 import Dashboard from "./pages/Dashboard";
 import Diagnosis from "./pages/Diagnosis";
 import Recommendations from "./pages/Recommendations";
@@ -30,10 +31,12 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <LoginGate>
-        <AppProvider>
-          <Sidebar activeIndex={activeIndex} onSelect={setActiveIndex} />
-          <ActivePage />
-        </AppProvider>
+        <AppGate>
+          <AppProvider>
+            <Sidebar activeIndex={activeIndex} onSelect={setActiveIndex} />
+            <ActivePage />
+          </AppProvider>
+        </AppGate>
       </LoginGate>
     </ThemeProvider>
   );

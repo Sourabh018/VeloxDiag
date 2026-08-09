@@ -8,10 +8,16 @@ function AppSelector() {
   const [apps, setApps] = useState([]);
 
   useEffect(() => {
+    // /api/applications (per-user owned apps, from ApplicationController) —
+    // NOT the old /api/dashboard/applications, which only listed names seen
+    // in telemetry already and stayed empty/stuck-loading for any app that
+    // hadn't sent data yet. AppGate guarantees at least one app exists by
+    // the time this mounts, so an empty result here would mean the two
+    // endpoints disagree, not a real "no apps" state.
     apiClient
-      .get("/api/dashboard/applications")
+      .get("/api/applications")
       .then((res) => {
-        const list = Array.isArray(res.data) ? res.data : [];
+        const list = Array.isArray(res.data) ? res.data.map((a) => a.name) : [];
         setApps(list);
         // No more "All Apps" — default to the first real app once loaded,
         // unless selectedApp already points at a valid one (e.g. page refresh).
