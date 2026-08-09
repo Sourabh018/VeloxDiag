@@ -24,6 +24,52 @@ function Settings() {
       .catch((err) => console.error("Fetch applications failed:", err.message));
   }, []);
 
+  // Registered apps — from ApplicationController (name + ingestApiKey), not
+  // the telemetry-derived list above. This is what "Delete Registered App"
+  // below operates on: deleting here only removes the Application row
+  // (registration + key), never touches Telemetry — see
+  // ApplicationController.deleteApplication javadoc.
+  const [registeredApps, setRegisteredApps] = useState([]);
+  const [registeredLoading, setRegisteredLoading] = useState(true);
+  const loadRegisteredApps = () => {
+    apiClient
+      .get("/api/applications")
+      .then((res) => setRegisteredApps(Array.isArray(res.data) ? res.data : []))
+      .catch((err) => console.error("Fetch registered applications failed:", err.message))
+      .finally(() => setRegisteredLoading(false));
+  };
+  useEffect(loadRegisteredApps, []);
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+
+  const openDeleteDialog = (appName) => {
+    setDeleteTarget(appName);
+    setDeleteConfirmText("");
+    setDeleteError(null);
+  };
+  const closeDeleteDialog = () => {
+    setDeleteTarget(null);
+    setDeleteConfirmText("");
+    setDeleteError(null);
+  };
+  const handleConfirmDelete = async () => {
+    if (deleteConfirmText !== deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await apiClient.delete(`/api/applications/${encodeURIComponent(deleteTarget)}`);
+      setRegisteredApps((prev) => prev.filter((a) => a.name !== deleteTarget));
+      closeDeleteDialog();
+    } catch (err) {
+      setDeleteError(err.response?.data || "Delete failed.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // useSettings is scoped to the globally-selected app — null/empty before
   // AppSelector has loaded is a guarded no-op inside the hook.
   const {
@@ -302,6 +348,120 @@ function Settings() {
             </Grid>
           </Paper>
         )}
+
+        {/* Delete Registered App — separate concern from Reset Data below.
+            This removes the Application row (registration + ingest key)
+            only; telemetry stays put under the plain-string applicationName
+            and picks back up if the same name is registered again later. */}
+        <Paper
+          variant="outlined"
+          sx={{
+            padding: 3,
+            marginTop: 3,
+            backgroundColor: "#111113",
+            borderColor: "rgba(229,72,77,0.25)",
+          }}
+        >
+          <Typography variant="h6" sx={{ color: "#EDEDEF", fontSize: "16.5px", marginBottom: 0.5 }}>
+            Delete Registered App
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#8C8C93", fontSize: "14.5px", marginBottom: 2 }}>
+            Permanently deletes the app's registration, API key, and ALL its telemetry + slow-query-plan data. This cannot be undone.
+          </Typography>
+
+          {registeredLoading ? (
+            <Typography sx={{ color: "#57575F", fontSize: "14px" }}>Loading…</Typography>
+          ) : registeredApps.length === 0 ? (
+            <Typography sx={{ color: "#57575F", fontSize: "14px" }}>No registered applications.</Typography>
+          ) : (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {registeredApps.map((app) => (
+                <Box
+                  key={app.name}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    backgroundColor: "#0C0C0E",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <Typography sx={{ color: "#EDEDEF", fontFamily: "ui-monospace, monospace", fontSize: "14.5px" }}>
+                    {app.name}
+                  </Typography>
+                  <Button
+                    onClick={() => openDeleteDialog(app.name)}
+                    sx={{
+                      textTransform: "none",
+                      color: "#F5A3A3",
+                      backgroundColor: "rgba(229,72,77,0.08)",
+                      border: "1px solid rgba(229,72,77,0.25)",
+                      padding: "4px 14px",
+                      fontSize: "13.5px",
+                      "&:hover": { backgroundColor: "rgba(229,72,77,0.14)" },
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Paper>
+
+        <Dialog open={deleteTarget !== null} onClose={closeDeleteDialog} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ color: "#EDEDEF", backgroundColor: "#111113" }}>
+            Delete "{deleteTarget}" registration?
+          </DialogTitle>
+          <DialogContent sx={{ backgroundColor: "#111113" }}>
+            <DialogContentText sx={{ color: "#8C8C93", fontSize: "14px", marginBottom: 2 }}>
+              Removes the registration, key, and ALL telemetry + slow-query-plan data for{" "}
+              <strong style={{ color: "#EDEDEF" }}>{deleteTarget}</strong>. Cannot be undone. Type the app name below to confirm.
+            </DialogContentText>
+            <TextField
+              autoFocus
+              fullWidth
+              label={`Type "${deleteTarget}" to confirm`}
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              sx={fieldSx}
+            />
+            {deleteError && (
+              <Box
+                sx={{
+                  marginTop: 2,
+                  padding: "8px 12px",
+                  borderRadius: "4px",
+                  color: "#F5A3A3",
+                  backgroundColor: "rgba(229,72,77,0.12)",
+                  fontSize: "13.5px",
+                }}
+              >
+                {typeof deleteError === "string" ? deleteError : "Delete failed."}
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ backgroundColor: "#111113", padding: 2 }}>
+            <Button onClick={closeDeleteDialog} sx={{ textTransform: "none", color: "#8C8C93" }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              disabled={deleteConfirmText !== deleteTarget || deleting}
+              sx={{
+                textTransform: "none",
+                color: "#F5A3A3",
+                backgroundColor: "rgba(229,72,77,0.1)",
+                "&:hover": { backgroundColor: "rgba(229,72,77,0.18)" },
+                "&.Mui-disabled": { color: "#57575F", backgroundColor: "transparent" },
+              }}
+            >
+              {deleting ? "Deleting..." : "Delete Registration"}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Reset section — separate card, unchanged in shape (already correctly
             per-app before this change), still lists every app regardless of
