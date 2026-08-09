@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "./theme";
 import Sidebar from "./components/Sidebar";
+import LoginGate from "./components/LoginGate";
 import Dashboard from "./pages/Dashboard";
 import Diagnosis from "./pages/Diagnosis";
 import Recommendations from "./pages/Recommendations";
@@ -28,10 +29,12 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppProvider>
-        <Sidebar activeIndex={activeIndex} onSelect={setActiveIndex} />
-        <ActivePage />
-      </AppProvider>
+      <LoginGate>
+        <AppProvider>
+          <Sidebar activeIndex={activeIndex} onSelect={setActiveIndex} />
+          <ActivePage />
+        </AppProvider>
+      </LoginGate>
     </ThemeProvider>
   );
 }
