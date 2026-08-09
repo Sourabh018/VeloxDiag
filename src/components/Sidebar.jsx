@@ -10,6 +10,7 @@ import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import ChatIcon from "@mui/icons-material/Chat";
 import BuildCircleIcon from "@mui/icons-material/BuildCircle";
 import DescriptionIcon from "@mui/icons-material/Description";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const menu = [
   { label: "Dashboard", icon: <SpeedIcon fontSize="small" /> },
@@ -28,6 +29,12 @@ const menu = [
 const DRAWER_WIDTH = 220;
 
 function Sidebar({ activeIndex, onSelect }) {
+  // Set by LoginGate only once logged in — Sidebar only ever mounts inside
+  // LoginGate's authenticated branch, so this is safe to call directly.
+  const handleLogout = () => {
+    if (window.__veloxdiagSignOut) window.__veloxdiagSignOut();
+  };
+
   return (
     <Drawer
       variant="permanent"
@@ -39,6 +46,8 @@ function Sidebar({ activeIndex, onSelect }) {
           boxSizing: "border-box",
           bgcolor: "#0C0C0E",
           borderRight: "1px solid rgba(255,255,255,0.06)",
+          display: "flex",
+          flexDirection: "column",
         },
       }}
     >
@@ -70,6 +79,23 @@ function Sidebar({ activeIndex, onSelect }) {
             />
           </ListItemButton>
         ))}
+      </List>
+      <Box sx={{ flexGrow: 1 }} />
+      <List sx={{ px: 1.5, pb: 2 }}>
+        <ListItemButton
+          onClick={handleLogout}
+          sx={{
+            borderRadius: 1.5,
+            py: 0.75,
+            color: "#6B6B73",
+            "&:hover": { bgcolor: "rgba(255,255,255,0.03)" },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Sign out" slotProps={{ primary: { fontSize: 14.5 } }} />
+        </ListItemButton>
       </List>
     </Drawer>
   );
