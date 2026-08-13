@@ -10,6 +10,7 @@ import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import ChatIcon from "@mui/icons-material/Chat";
 import BuildCircleIcon from "@mui/icons-material/BuildCircle";
 import DescriptionIcon from "@mui/icons-material/Description";
+import GavelIcon from "@mui/icons-material/Gavel";
 import LogoutIcon from "@mui/icons-material/Logout";
 
 const menu = [
@@ -21,6 +22,7 @@ const menu = [
   { label: "Slow Queries", icon: <HourglassBottomIcon fontSize="small" /> },
   { label: "Query Analyzer", icon: <QueryStatsIcon fontSize="small" /> },
   { label: "Index Advisor", icon: <BoltIcon fontSize="small" /> },
+  { label: "Rules", icon: <GavelIcon fontSize="small" /> },
   { label: "Ask VeloxDiag", icon: <ChatIcon fontSize="small" /> },
   { label: "Business Context", icon: <DescriptionIcon fontSize="small" /> },
   { label: "Settings", icon: <SettingsIcon fontSize="small" /> },
