@@ -41,10 +41,17 @@ function AppGate({ children }) {
   };
 
   const snippet = justCreated
-    ? `<dependency>
-  <groupId>com.veloxdiag</groupId>
+    ? `<repositories>
+  <repository>
+    <id>jitpack.io</id>
+    <url>https://jitpack.io</url>
+  </repository>
+</repositories>
+
+<dependency>
+  <groupId>com.github.Sourabh018</groupId>
   <artifactId>veloxdiag-starter</artifactId>
-  <version>0.0.1</version>
+  <version>v0.0.1</version>
 </dependency>
 
 # application.yml
