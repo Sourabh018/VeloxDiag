@@ -27,13 +27,21 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Endpoints where a 401 means "wrong credentials", not "stale session".
+// LoginGate already shows its own inline error for these — don't hijack
+// that with a forced reload back to the landing page.
+const AUTH_ENDPOINTS = ["/api/auth/login", "/api/auth/register"];
+
 // If the backend rejects the stored session token (expired/invalid), clear it
 // and reload so LoginGate falls back to the login screen instead of leaving
 // the user stuck on "Login required" errors while looking logged in.
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const url = error.config?.url || "";
+    const isAuthAttempt = AUTH_ENDPOINTS.some((path) => url.includes(path));
+
+    if (error.response?.status === 401 && !isAuthAttempt) {
       localStorage.removeItem("veloxdiag_session_token");
       localStorage.removeItem("veloxdiag_session_email");
       window.location.reload();
