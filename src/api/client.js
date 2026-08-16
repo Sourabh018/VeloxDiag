@@ -27,4 +27,19 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// If the backend rejects the stored session token (expired/invalid), clear it
+// and reload so LoginGate falls back to the login screen instead of leaving
+// the user stuck on "Login required" errors while looking logged in.
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("veloxdiag_session_token");
+      localStorage.removeItem("veloxdiag_session_email");
+      window.location.reload();
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default apiClient;
