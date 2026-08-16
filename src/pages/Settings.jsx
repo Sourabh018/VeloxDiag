@@ -93,11 +93,14 @@ function Settings({ onMobileMenuToggle }) {
     setDeleteError(null);
     try {
       await apiClient.delete(`/api/applications/${encodeURIComponent(deleteTarget)}`);
-      setRegisteredApps((prev) => prev.filter((a) => a.name !== deleteTarget));
-      closeDeleteDialog();
+      // Full reload instead of just updating local state — forces AppGate to
+      // re-fetch /api/applications fresh, so if this was the last (or
+      // currently selected) app it correctly falls back to the
+      // Register/choose-app screen instead of leaving the user stuck on a
+      // stale dashboard for an app that no longer exists.
+      window.location.reload();
     } catch (err) {
       setDeleteError(err.response?.data || "Delete failed.");
-    } finally {
       setDeleting(false);
     }
   };
