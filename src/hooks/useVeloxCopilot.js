@@ -18,11 +18,11 @@ export default function useVeloxCopilot(applicationName) {
       try {
         const appParam = applicationName ? { applicationName } : {};
         const res = await apiClient.post("/api/chat", {
-          message: text,
+          question: text,
           ...appParam,
         });
 
-        const reply = res.data?.reply ?? res.data?.message ?? "No response from AI.";
+        const reply = res.data?.answer ?? "No response from AI.";
         setMessages((prev) => [...prev, { sender: "assistant", text: reply }]);
       } catch (err) {
         console.error("Chat error:", err.message);
