@@ -1,124 +1,174 @@
-import { Box, Typography, CircularProgress, Paper } from "@mui/material";
+import { Box, Typography, CircularProgress, Paper, Chip, Alert, Stack } from "@mui/material";
+import BoltIcon from "@mui/icons-material/Bolt";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Header from "../components/Header";
 import useIndexAdvisor from "../hooks/useIndexAdvisor";
 
-function IndexAdvisor() {
+function IndexAdvisor({ onMobileMenuToggle }) {
   const { candidates, loading, error } = useIndexAdvisor();
 
   return (
     <>
-      <Header />
-      <Box sx={{ marginLeft: "220px", marginTop: "64px", padding: 4 }}>
+      <Header onMobileMenuToggle={onMobileMenuToggle} />
+      <Box
+        component="main"
+        sx={{
+          marginLeft: { xs: 0, md: "248px" },
+          marginTop: "64px",
+          padding: { xs: 2.5, sm: 3, md: 4 },
+          bgcolor: "#F8FAFC",
+          minHeight: "calc(100vh - 64px)",
+        }}
+      >
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: "10px",
+                bgcolor: "#ECFDF5",
+                color: "#059669",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <BoltIcon fontSize="small" />
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em" }}>
+              Index Advisor
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: "#64748B" }}>
+            Flags endpoints that are slow on every call rather than only under load — a pattern
+            often associated with a missing database index.
+          </Typography>
+        </Box>
 
         {error && (
-          <Box
-            sx={{
-              display: "inline-block",
-              padding: "6px 12px",
-              borderRadius: "4px",
-              marginBottom: 2,
-              color: "#F5A3A3",
-              backgroundColor: "rgba(229,72,77,0.12)",
-              fontSize: "14.5px",
-            }}
-          >
+          <Alert severity="warning" sx={{ mb: 3, borderRadius: "10px" }}>
             Could not reach VeloxDiag server — showing last known data
-          </Box>
+          </Alert>
         )}
-
-        <Typography variant="h5" sx={{ marginBottom: 1, color: "#EDEDEF" }}>
-          Index Advisor
-        </Typography>
-        <Typography variant="body2" sx={{ color: "#8C8C93", marginBottom: 2, fontSize: "15.5px" }}>
-          Flags endpoints that are slow on every call rather than only under load — a pattern
-          often associated with a missing database index.
-        </Typography>
 
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
-            gap: 1,
-            padding: "10px 14px",
-            borderRadius: "4px",
-            marginBottom: 3,
-            color: "#8C8C93",
-            backgroundColor: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.07)",
-            fontSize: "14px",
+            alignItems: "flex-start",
+            gap: 1.5,
+            p: "14px 18px",
+            borderRadius: "10px",
+            mb: 3,
+            bgcolor: "#EFF6FF",
+            border: "1px solid #BFDBFE",
           }}
         >
-          <Box sx={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#57575F", flexShrink: 0 }} />
-          Heuristic only, superseded by the EXPLAIN-based Missing Index Candidate finding in Diagnosis. Based on
-          response-time consistency, not actual query plan inspection — treat findings here as leads worth
-          investigating, not confirmed diagnoses.
+          <InfoOutlinedIcon fontSize="small" sx={{ color: "#2563EB", mt: 0.1, flexShrink: 0 }} />
+          <Typography sx={{ fontSize: 13.5, color: "#1E40AF", lineHeight: 1.6 }}>
+            <strong>Heuristic Mode</strong> — Superseded by EXPLAIN-based Missing Index Candidate findings on Diagnosis page.
+            Based on low response-time variance across calls. Treat findings here as actionable leads for index optimization.
+          </Typography>
         </Box>
 
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", padding: 8 }}>
-            <CircularProgress />
+          <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+            <CircularProgress size={28} sx={{ color: "#2563EB" }} />
           </Box>
         ) : candidates.length === 0 ? (
-          <Typography sx={{ color: "#57575F", fontSize: "15.5px" }}>
-            No candidates found. Either nothing is both slow and consistently slow right now, or there isn't enough sample data yet (need at least 3 requests per endpoint).
-          </Typography>
+          <Paper
+            elevation={0}
+            sx={{ p: 5, textAlign: "center", border: "1px solid #E2E8F0", borderRadius: "12px", bgcolor: "#FFFFFF", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)" }}
+          >
+            <Typography variant="h6" sx={{ color: "#0F172A", fontWeight: 800, mb: 0.5 }}>
+              No Candidates Found
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#64748B", maxWidth: 460, mx: "auto", lineHeight: 1.6 }}>
+              No endpoints are currently slow with low variance, or there isn't enough sample data yet
+              (requires at least 3 requests per endpoint).
+            </Typography>
+          </Paper>
         ) : (
           candidates.map((c, i) => (
             <Paper
               key={i}
-              variant="outlined"
+              elevation={0}
               sx={{
-                padding: 2,
-                marginBottom: 1.5,
-                backgroundColor: "#111113",
-                borderColor: "rgba(255,255,255,0.07)",
+                p: 2.5,
+                mb: 2,
+                border: "1px solid #E2E8F0",
+                borderRadius: "12px",
+                bgcolor: "#FFFFFF",
+                boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
+                transition: "all 0.15s ease",
+                "&:hover": { boxShadow: "0 4px 12px rgba(15, 23, 42, 0.06)", borderColor: "#CBD5E1" },
               }}
             >
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 1 }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5, gap: 2, flexWrap: "wrap" }}>
                 <Typography
-                  variant="subtitle2"
-                  sx={{ fontFamily: "IBM Plex Mono, ui-monospace, monospace", color: "#EDEDEF", fontSize: "16px" }}
+                  sx={{
+                    fontFamily: '"JetBrains Mono", "IBM Plex Mono", monospace',
+                    fontSize: 14.5,
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    wordBreak: "break-all",
+                  }}
                 >
                   {c.endpoint}
                 </Typography>
-                <Box
+                <Chip
+                  label={`avg ${c.avgDurationMs.toFixed(0)}ms`}
+                  size="small"
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.75,
-                    padding: "4px 10px",
-                    borderRadius: "4px",
-                    backgroundColor: "rgba(217,162,75,0.12)",
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#92400E",
+                    bgcolor: "#FFFBEB",
+                    border: "1px solid #FCD34D",
+                    height: 24,
+                    borderRadius: "6px",
+                    flexShrink: 0,
                   }}
-                >
-                  <Box sx={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#D9A24B", flexShrink: 0 }} />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "#F0C989",
-                      fontFamily: "IBM Plex Mono, ui-monospace, monospace",
-                      fontVariantNumeric: "tabular-nums",
-                      fontSize: "14px",
-                    }}
-                  >
-                    avg {c.avgDurationMs.toFixed(0)}ms
-                  </Typography>
-                </Box>
+                />
               </Box>
-              <Typography variant="body2" sx={{ color: "#8C8C93", marginBottom: 1, fontSize: "14.5px" }}>
+
+              <Typography sx={{ fontSize: 13.5, color: "#334155", mb: 2, lineHeight: 1.6 }}>
                 {c.message}
               </Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "#57575F",
-                  fontFamily: "IBM Plex Mono, ui-monospace, monospace",
-                  fontVariantNumeric: "tabular-nums",
-                  fontSize: "12.5px",
-                }}
-              >
-                stdDev: {c.stdDeviationMs.toFixed(0)}ms · coefficient of variation: {c.coefficientOfVariation.toFixed(2)} · samples: {c.sampleCount}
-              </Typography>
+
+              <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap", gap: 1.5 }}>
+                <Typography
+                  sx={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: 12,
+                    color: "#64748B",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  stdDev: <strong style={{ color: "#0F172A" }}>{c.stdDeviationMs.toFixed(0)}ms</strong>
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: 12,
+                    color: "#64748B",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  cv: <strong style={{ color: "#0F172A" }}>{c.coefficientOfVariation.toFixed(2)}</strong>
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: 12,
+                    color: "#64748B",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  samples: <strong style={{ color: "#0F172A" }}>{c.sampleCount}</strong>
+                </Typography>
+              </Stack>
             </Paper>
           ))
         )}

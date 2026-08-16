@@ -11,47 +11,48 @@ import {
   Paper,
   Button,
   Collapse,
+  Chip,
+  Alert,
+  Stack,
 } from "@mui/material";
+import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import Header from "../components/Header";
 import useDashboardMetrics from "../hooks/useDashboardMetrics";
 import { useSelectedApp } from "../contexts/AppContext";
 import apiClient from "../api/client";
 
-// Same severity ramp used on Dashboard's Slow Endpoints and FindingCard —
-// one duration-to-severity mapping reused everywhere instead of three
-// slightly different definitions of "how slow is bad."
 function severityForDuration(ms) {
-  if (ms >= 3000) return { dot: "#E5484D", text: "#F5A3A3", bg: "rgba(229,72,77,0.12)", label: "HIGH" };
-  if (ms >= 1000) return { dot: "#D9A24B", text: "#F0C989", bg: "rgba(217,162,75,0.12)", label: "MEDIUM" };
-  return { dot: "#5B7CFF", text: "#C3CCFF", bg: "rgba(91,124,255,0.12)", label: "LOW" };
+  if (ms >= 3000) return { dot: "#DC2626", color: "#991B1B", bgcolor: "#FEF2F2", border: "#FCA5A5", label: "HIGH" };
+  if (ms >= 1000) return { dot: "#D97706", color: "#92400E", bgcolor: "#FFFBEB", border: "#FCD34D", label: "MEDIUM" };
+  return { dot: "#2563EB", color: "#1E40AF", bgcolor: "#EFF6FF", border: "#BFDBFE", label: "LOW" };
 }
 
-function SeverityTag({ avgDuration }) {
+function SeverityChip({ avgDuration }) {
   const s = severityForDuration(avgDuration);
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-      <Box sx={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: s.dot }} />
-      <Typography
+    <Stack direction="row" spacing={0.75} alignItems="center">
+      <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: s.dot, flexShrink: 0 }} />
+      <Chip
+        label={s.label}
+        size="small"
         sx={{
-          fontFamily: "ui-monospace, monospace",
-          fontSize: 11.5,
-          letterSpacing: "0.03em",
-          color: s.text,
-          backgroundColor: s.bg,
-          padding: "2px 8px",
-          borderRadius: 10,
+          fontFamily: '"JetBrains Mono", monospace',
+          fontSize: 11,
+          fontWeight: 700,
+          color: s.color,
+          bgcolor: s.bgcolor,
+          border: `1px solid ${s.border}`,
+          height: 22,
+          borderRadius: "6px",
         }}
-      >
-        {s.label}
-      </Typography>
-    </Box>
+      />
+    </Stack>
   );
 }
 
-// One captured plan's card — SQL + EXPLAIN output plus the AI wow feature #1
-// "Explain in plain English" lazy-fetch button. Same lazy-fetch-on-first-click
-// pattern FindingCard uses for narrative/suggestion: fetch once, cache in
-// local state, toggle visibility on repeat clicks without re-hitting Groq.
 function QueryPlanCard({ plan }) {
   const [explainExpanded, setExplainExpanded] = useState(false);
   const [explanation, setExplanation] = useState(null);
@@ -64,7 +65,7 @@ function QueryPlanCard({ plan }) {
       return;
     }
     setExplainExpanded(true);
-    if (explanation !== null) return; // already fetched, just re-showing
+    if (explanation !== null) return;
 
     setExplainLoading(true);
     setExplainError(null);
@@ -80,92 +81,114 @@ function QueryPlanCard({ plan }) {
 
   return (
     <Paper
-      variant="outlined"
+      elevation={0}
       sx={{
-        padding: 1.5,
-        marginBottom: 1,
-        borderColor: "rgba(255,255,255,0.06)",
-        borderRadius: "8px",
-        backgroundColor: "#0C0C0E",
+        p: 2.5,
+        mb: 2,
+        border: "1px solid #E2E8F0",
+        borderRadius: "10px",
+        bgcolor: "#FFFFFF",
+        boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
       }}
     >
-      <Box sx={{ display: "flex", justifyContent: "space-between", marginBottom: 0.5 }}>
-        <Typography sx={{ fontSize: 12, color: "text.disabled" }}>
-          {new Date(plan.timestamp).toLocaleString()} · {plan.requestDurationMs}ms
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+        <Typography sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 12.5, color: "#64748B", fontWeight: 500 }}>
+          Captured on {new Date(plan.timestamp).toLocaleString()} · {plan.requestDurationMs}ms request
         </Typography>
-        <Typography
+        <Chip
+          label={plan.containsSeqScan ? "Seq Scan Detected" : "Index Used"}
+          size="small"
           sx={{
-            fontFamily: "ui-monospace, monospace",
+            fontFamily: '"JetBrains Mono", monospace',
             fontSize: 11,
-            letterSpacing: "0.02em",
-            color: plan.containsSeqScan ? "#F0C989" : "#8FD9A8",
-            backgroundColor: plan.containsSeqScan ? "rgba(217,162,75,0.12)" : "rgba(143,217,168,0.12)",
-            padding: "2px 8px",
-            borderRadius: 10,
+            fontWeight: 700,
+            color: plan.containsSeqScan ? "#92400E" : "#065F46",
+            bgcolor: plan.containsSeqScan ? "#FFFBEB" : "#ECFDF5",
+            border: `1px solid ${plan.containsSeqScan ? "#FCD34D" : "#6EE7B7"}`,
+            height: 22,
+            borderRadius: "6px",
           }}
-        >
-          {plan.containsSeqScan ? "Seq Scan" : "Index Used"}
-        </Typography>
+        />
       </Box>
 
-      <Typography
+      <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#64748B", letterSpacing: "0.05em", textTransform: "uppercase", mb: 0.5 }}>
+        EXECUTED SQL STATEMENT
+      </Typography>
+      <Box
         component="pre"
         sx={{
-          fontFamily: "ui-monospace, monospace",
-          fontSize: 12,
+          fontFamily: '"JetBrains Mono", "IBM Plex Mono", monospace',
+          fontSize: 12.5,
+          color: "#F8FAFC",
+          bgcolor: "#0F172A",
+          borderRadius: "8px",
+          p: 2,
           whiteSpace: "pre-wrap",
           wordBreak: "break-word",
-          color: "#7C7C86",
-          margin: 0,
-          marginBottom: 0.75,
+          m: 0,
+          mb: 2,
         }}
       >
         {plan.sqlText}
-      </Typography>
+      </Box>
 
-      <Typography
+      <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#64748B", letterSpacing: "0.05em", textTransform: "uppercase", mb: 0.5 }}>
+        EXPLAIN QUERY PLAN
+      </Typography>
+      <Box
         component="pre"
         sx={{
-          fontFamily: "ui-monospace, monospace",
+          fontFamily: '"JetBrains Mono", monospace',
           fontSize: 12,
+          color: "#334155",
+          bgcolor: "#F8FAFC",
+          border: "1px solid #E2E8F0",
+          borderRadius: "8px",
+          p: 1.5,
           whiteSpace: "pre-wrap",
           wordBreak: "break-word",
-          color: "#B0B0B6",
-          margin: 0,
+          m: 0,
+          mb: 1.5,
         }}
       >
         {plan.explainPlan}
-      </Typography>
+      </Box>
 
-      <Box sx={{ marginTop: 1 }}>
+      <Box sx={{ mt: 1.5 }}>
         <Button
           size="small"
           variant="text"
           onClick={handleToggleExplain}
           disabled={explainLoading}
-          sx={{ fontSize: 12.5, textTransform: "none", color: "primary.main", padding: 0, minWidth: 0 }}
+          startIcon={explainLoading ? <CircularProgress size={12} sx={{ color: "#2563EB" }} /> : <AutoAwesomeIcon fontSize="small" />}
+          sx={{
+            fontSize: 12.5,
+            color: "#2563EB",
+            p: 0,
+            minWidth: 0,
+            fontWeight: 700,
+            textTransform: "none",
+            "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
+          }}
         >
-          {explainLoading ? <CircularProgress size={14} sx={{ mr: 1, color: "primary.main" }} /> : null}
-          {explainExpanded ? "Hide explanation" : "Explain in plain English"}
+          {explainExpanded ? "Hide AI explanation" : "Explain with AI"}
         </Button>
 
         {explainExpanded && (
-          <Box sx={{ marginTop: 1 }}>
+          <Box sx={{ mt: 1.5 }}>
             {explainError && (
-              <Typography variant="caption" color="error">
-                {explainError}
-              </Typography>
+              <Typography variant="caption" color="error">{explainError}</Typography>
             )}
             {explanation && (
               <Box
                 sx={{
-                  padding: "8px 10px",
-                  borderRadius: "6px",
-                  backgroundColor: "rgba(91,124,255,0.05)",
-                  border: "1px solid rgba(91,124,255,0.15)",
+                  p: 2,
+                  borderRadius: "8px",
+                  bgcolor: "#EFF6FF",
+                  border: "1px solid #BFDBFE",
                 }}
               >
-                <Typography sx={{ fontSize: 13, color: "#C3CCFF", lineHeight: 1.55 }}>
+                <Typography sx={{ fontSize: 13.5, color: "#1E40AF", lineHeight: 1.6 }}>
                   {explanation}
                 </Typography>
               </Box>
@@ -177,17 +200,13 @@ function QueryPlanCard({ plan }) {
   );
 }
 
-function SlowQueries() {
+function SlowQueries({ onMobileMenuToggle }) {
   const { selectedApp } = useSelectedApp();
   const { slowEndpoints, loading, error } = useDashboardMetrics({ applicationName: selectedApp });
   const safeSlowEndpoints = Array.isArray(slowEndpoints) ? slowEndpoints : [];
 
-  // Sort slowest-first so the worst offenders are immediately visible
   const sorted = [...safeSlowEndpoints].sort((a, b) => b.avgDuration - a.avgDuration);
 
-  // Row-expand state, keyed by endpoint — click a row to fetch and reveal
-  // its captured query plans below it, same lazy-fetch-on-first-click
-  // pattern as FindingCard's "Show query plan" toggle.
   const [expandedEndpoint, setExpandedEndpoint] = useState(null);
   const [plansByEndpoint, setPlansByEndpoint] = useState({});
   const [plansLoading, setPlansLoading] = useState(false);
@@ -199,7 +218,7 @@ function SlowQueries() {
       return;
     }
     setExpandedEndpoint(endpoint);
-    if (plansByEndpoint[endpoint] !== undefined) return; // already fetched
+    if (plansByEndpoint[endpoint] !== undefined) return;
 
     setPlansLoading(true);
     setPlansError(null);
@@ -215,105 +234,165 @@ function SlowQueries() {
 
   return (
     <>
-      <Header />
-      <Box sx={{ marginLeft: "220px", marginTop: "64px", padding: 4 }}>
+      <Header onMobileMenuToggle={onMobileMenuToggle} />
+      <Box
+        component="main"
+        sx={{
+          marginLeft: { xs: 0, md: "248px" },
+          marginTop: "64px",
+          padding: { xs: 2.5, sm: 3, md: 4 },
+          bgcolor: "#F8FAFC",
+          minHeight: "calc(100vh - 64px)",
+        }}
+      >
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: "10px",
+                bgcolor: "#FFFBEB",
+                color: "#D97706",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <HourglassBottomIcon fontSize="small" />
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em" }}>
+              Slow Queries & Execution Plans
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: "#64748B" }}>
+            Endpoints averaging above the slow-request threshold, sorted worst-first.
+            Click a row to inspect captured database query statements and EXPLAIN plans.
+          </Typography>
+        </Box>
 
         {error && (
-          <Typography
-            sx={{
-              display: "inline-block",
-              fontSize: 13.5,
-              color: "#F5A3A3",
-              border: "1px solid rgba(229,72,77,0.25)",
-              backgroundColor: "rgba(229,72,77,0.08)",
-              borderRadius: 10,
-              padding: "4px 12px",
-              marginBottom: 2,
-            }}
-          >
+          <Alert severity="warning" sx={{ mb: 3, borderRadius: "10px" }}>
             Could not reach VeloxDiag server — showing last known data
-          </Typography>
+          </Alert>
         )}
 
-        <Typography sx={{ fontSize: 16.5, fontWeight: 500, color: "#EDEDEF", marginBottom: 0.5 }}>
-          Slow Queries
-        </Typography>
-        <Typography sx={{ fontSize: 14, color: "text.secondary", marginBottom: 3 }}>
-          Endpoints averaging above the slow-request threshold, sorted worst-first. Click a row to see captured query plans.
-        </Typography>
-
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", padding: 8 }}>
-            <CircularProgress size={24} sx={{ color: "text.disabled" }} />
+          <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+            <CircularProgress size={28} sx={{ color: "#2563EB" }} />
           </Box>
         ) : sorted.length === 0 ? (
-          <Typography sx={{ fontSize: 14.5, color: "text.secondary" }}>No slow endpoints recorded.</Typography>
+          <Paper
+            elevation={0}
+            sx={{ p: 5, textAlign: "center", border: "1px solid #E2E8F0", borderRadius: "12px", bgcolor: "#FFFFFF", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)" }}
+          >
+            <Typography variant="h6" sx={{ color: "#0F172A", fontWeight: 800, mb: 0.5 }}>
+              No Slow Endpoints
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#64748B" }}>
+              All endpoints are within the performance threshold for{" "}
+              <strong>{selectedApp || "this application"}</strong>.
+            </Typography>
+          </Paper>
         ) : (
           <Paper
-            variant="outlined"
-            sx={{ backgroundColor: "#111113", borderColor: "rgba(255,255,255,0.07)", borderRadius: "10px" }}
+            elevation={0}
+            sx={{ border: "1px solid #E2E8F0", borderRadius: "12px", overflow: "hidden", boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)" }}
           >
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  {["Endpoint", "Avg Duration", "Sample Count", "Severity"].map((h) => (
-                    <TableCell
-                      key={h}
-                      sx={{ fontSize: 12, color: "text.disabled", textTransform: "uppercase", letterSpacing: "0.05em", borderColor: "rgba(255,255,255,0.06)" }}
-                    >
-                      {h}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sorted.map((ep, i) => {
-                  const isExpanded = expandedEndpoint === ep.endpoint;
-                  const plans = plansByEndpoint[ep.endpoint];
-                  return (
-                    <Fragment key={i}>
-                      <TableRow
-                        onClick={() => handleRowClick(ep.endpoint)}
-                        sx={{ cursor: "pointer", "&:hover": { backgroundColor: "rgba(255,255,255,0.02)" } }}
-                      >
-                        <TableCell sx={{ fontFamily: "ui-monospace, monospace", fontSize: 14, color: "#EDEDEF", borderColor: "rgba(255,255,255,0.05)" }}>
-                          {ep.endpoint}
-                        </TableCell>
-                        <TableCell sx={{ fontFamily: "ui-monospace, monospace", fontSize: 14, color: "#D4D4D8", fontVariantNumeric: "tabular-nums", borderColor: "rgba(255,255,255,0.05)" }}>
-                          {ep.avgDuration.toFixed(0)}ms
-                        </TableCell>
-                        <TableCell sx={{ fontSize: 13.5, color: "text.secondary", borderColor: "rgba(255,255,255,0.05)" }}>
-                          {ep.count}
-                        </TableCell>
-                        <TableCell sx={{ borderColor: "rgba(255,255,255,0.05)" }}>
-                          <SeverityTag avgDuration={ep.avgDuration} />
-                        </TableCell>
-                      </TableRow>
-                      <TableRow key={`${i}-expand`}>
-                        <TableCell colSpan={4} sx={{ padding: isExpanded ? "12px 16px" : 0, border: 0 }}>
-                          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                            {plansLoading && !plans && <CircularProgress size={16} />}
-                            {plansError && !plans && (
-                              <Typography variant="caption" color="error">
-                                {plansError}
-                              </Typography>
+            <Box sx={{ overflowX: "auto" }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    {["Endpoint", "Avg Duration", "Samples", "Severity", ""].map((h) => (
+                      <TableCell key={h}>{h}</TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {sorted.map((ep, i) => {
+                    const isExpanded = expandedEndpoint === ep.endpoint;
+                    const plans = plansByEndpoint[ep.endpoint];
+                    return (
+                      <Fragment key={i}>
+                        <TableRow
+                          onClick={() => handleRowClick(ep.endpoint)}
+                          sx={{
+                            cursor: "pointer",
+                            "&:hover": { bgcolor: "#F8FAFC" },
+                            bgcolor: isExpanded ? "#EFF6FF" : "transparent",
+                            transition: "background-color 0.15s",
+                          }}
+                        >
+                          <TableCell
+                            sx={{
+                              fontFamily: '"JetBrains Mono", "IBM Plex Mono", monospace',
+                              fontSize: 13.5,
+                              color: "#0F172A",
+                              fontWeight: 700,
+                              maxWidth: 300,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {ep.endpoint}
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              fontFamily: '"JetBrains Mono", monospace',
+                              fontSize: 13.5,
+                              color: "#0F172A",
+                              fontVariantNumeric: "tabular-nums",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {ep.avgDuration.toFixed(0)}ms
+                          </TableCell>
+                          <TableCell sx={{ fontSize: 13.5, color: "#475569", fontWeight: 500 }}>
+                            {ep.count}
+                          </TableCell>
+                          <TableCell>
+                            <SeverityChip avgDuration={ep.avgDuration} />
+                          </TableCell>
+                          <TableCell sx={{ textAlign: "right" }}>
+                            {isExpanded ? (
+                              <ExpandLessIcon fontSize="small" sx={{ color: "#2563EB" }} />
+                            ) : (
+                              <ExpandMoreIcon fontSize="small" sx={{ color: "#94A3B8" }} />
                             )}
-                            {plans?.length === 0 && (
-                              <Typography variant="caption" color="text.secondary">
-                                No captured plans found for this endpoint.
-                              </Typography>
-                            )}
-                            {plans?.map((plan) => (
-                              <QueryPlanCard key={plan.id} plan={plan} />
-                            ))}
-                          </Collapse>
-                        </TableCell>
-                      </TableRow>
-                    </Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow key={`${i}-expand`}>
+                          <TableCell colSpan={5} sx={{ p: isExpanded ? "20px" : 0, border: 0, bgcolor: "#F8FAFC" }}>
+                            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                              {plansLoading && !plans && (
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, py: 1.5 }}>
+                                  <CircularProgress size={16} sx={{ color: "#2563EB" }} />
+                                  <Typography variant="body2" sx={{ color: "#64748B", fontWeight: 500 }}>
+                                    Loading captured query plans...
+                                  </Typography>
+                                </Box>
+                              )}
+                              {plansError && !plans && (
+                                <Typography variant="caption" color="error">{plansError}</Typography>
+                              )}
+                              {plans?.length === 0 && (
+                                <Typography variant="body2" sx={{ color: "#94A3B8" }}>
+                                  No captured query plans found for this endpoint.
+                                </Typography>
+                              )}
+                              {plans?.map((plan) => (
+                                <QueryPlanCard key={plan.id} plan={plan} />
+                              ))}
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+                      </Fragment>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Box>
           </Paper>
         )}
       </Box>

@@ -2,13 +2,45 @@ import { useState, useEffect } from "react";
 import {
   Box, Typography, TextField, Button, CircularProgress, Paper, Grid,
   Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
+  Alert, Chip, Divider,
 } from "@mui/material";
+import SettingsIcon from "@mui/icons-material/Settings";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import Header from "../components/Header";
 import useSettings from "../hooks/useSettings";
 import apiClient from "../api/client";
 import { useSelectedApp } from "../contexts/AppContext";
 
-function Settings() {
+const fieldSx = {
+  "& .MuiOutlinedInput-root": {
+    bgcolor: "#FFFFFF",
+    fontSize: 14,
+    "& fieldset": { borderColor: "#E2E8F0" },
+    "&:hover fieldset": { borderColor: "#CBD5E1" },
+    "&.Mui-focused fieldset": { borderColor: "#2563EB" },
+  },
+  "& .MuiInputLabel-root": { color: "#64748B", fontSize: 14 },
+  "& .MuiInputBase-input": {
+    color: "#0F172A",
+    fontFamily: '"JetBrains Mono", "IBM Plex Mono", monospace',
+    fontVariantNumeric: "tabular-nums",
+    fontSize: 14,
+  },
+  "& .MuiFormHelperText-root": { color: "#94A3B8", fontSize: 12 },
+};
+
+const dialogFieldSx = {
+  "& .MuiOutlinedInput-root": {
+    fontSize: 14,
+    "& fieldset": { borderColor: "#E2E8F0" },
+    "&:hover fieldset": { borderColor: "#CBD5E1" },
+    "&.Mui-focused fieldset": { borderColor: "#2563EB" },
+  },
+  "& .MuiInputLabel-root": { color: "#64748B", fontSize: 14 },
+  "& .MuiInputBase-input": { color: "#0F172A", fontSize: 14 },
+};
+
+function Settings({ onMobileMenuToggle }) {
   // Reuses the same global app selector already in the Header (AppSelector.jsx)
   // instead of adding a second, separate dropdown on this page. Whatever app
   // the user has selected app-wide is what these thresholds edit.
@@ -147,65 +179,85 @@ function Settings() {
     });
   };
 
-  const fieldSx = {
-    "& .MuiOutlinedInput-root": {
-      backgroundColor: "#0C0C0E",
-      "& fieldset": { borderColor: "rgba(255,255,255,0.07)" },
-      "&:hover fieldset": { borderColor: "rgba(255,255,255,0.14)" },
-      "&.Mui-focused fieldset": { borderColor: "#5B7CFF" },
-    },
-    "& .MuiInputLabel-root": { color: "#8C8C93", fontSize: "14.5px" },
-    "& .MuiInputBase-input": {
-      color: "#EDEDEF",
-      fontFamily: "IBM Plex Mono, ui-monospace, monospace",
-      fontVariantNumeric: "tabular-nums",
-      fontSize: "15.5px",
-    },
-    "& .MuiFormHelperText-root": { color: "#57575F", fontSize: "12.5px" },
-  };
-
   return (
     <>
-      <Header />
-      <Box sx={{ marginLeft: "220px", marginTop: "64px", padding: 4, maxWidth: 600 }}>
+      <Header onMobileMenuToggle={onMobileMenuToggle} />
+      <Box
+        component="main"
+        sx={{
+          marginLeft: { xs: 0, md: "248px" },
+          marginTop: "64px",
+          padding: { xs: 2.5, sm: 3, md: 4 },
+          bgcolor: "#F8FAFC",
+          minHeight: "calc(100vh - 64px)",
+        }}
+      >
+        {/* Page header */}
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: "10px",
+                bgcolor: "#F8FAFC",
+                color: "#64748B",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1px solid #E2E8F0",
+              }}
+            >
+              <SettingsIcon fontSize="small" />
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "#0F172A" }}>
+              Settings
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: "#64748B", maxWidth: 680 }}>
+            Adjust the Diagnosis Engine's rule thresholds and lookback window for{" "}
+            <strong style={{ color: "#0F172A" }}>{selectedApp || "the selected application"}</strong>{" "}
+            (use the app selector in the header to switch). Each application has its own independent thresholds.
+            Changes apply immediately to future scans and are persisted.
+          </Typography>
+        </Box>
 
         {error && (
-          <Box
-            sx={{
-              display: "inline-block",
-              padding: "6px 12px",
-              borderRadius: "4px",
-              marginBottom: 2,
-              color: "#F5A3A3",
-              backgroundColor: "rgba(229,72,77,0.12)",
-              fontSize: "14.5px",
-            }}
-          >
-            Could not reach VeloxDiag server — showing last known data
-          </Box>
+          <Alert severity="warning" sx={{ mb: 3, borderRadius: "10px" }}>
+            Could not reach VeloxDiag server — showing last known settings
+          </Alert>
         )}
 
-        <Typography variant="h5" sx={{ marginBottom: 1, color: "#EDEDEF" }}>
-          Settings
-        </Typography>
-        <Typography variant="body2" sx={{ color: "#8C8C93", marginBottom: 1, fontSize: "15.5px" }}>
-          Adjust the Diagnosis Engine's rule thresholds and lookback window for <strong style={{ color: "#EDEDEF" }}>{selectedApp || "the selected application"}</strong> (use the app selector in the header to switch). Each application has its own independent thresholds. Changes apply immediately to future scans of this application and are persisted, so they survive server restarts and redeploys.
-        </Typography>
+        {/* Rule Engine Thresholds */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            mb: 3,
+            border: "1px solid #E2E8F0",
+            borderRadius: "12px",
+            bgcolor: "#FFFFFF",
+            maxWidth: 680,
+          }}
+        >
+          <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#0F172A", mb: 0.5 }}>
+            Rule Engine Thresholds
+          </Typography>
+          <Typography sx={{ fontSize: 13, color: "#64748B", mb: 2.5 }}>
+            Per-application settings for{" "}
+            <Chip
+              label={selectedApp || "No app selected"}
+              size="small"
+              sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 11.5, fontWeight: 600, bgcolor: "#EFF6FF", color: "#2563EB", border: "1px solid #BFDBFE", height: 22 }}
+            />
+          </Typography>
 
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", padding: 8 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Paper
-            variant="outlined"
-            sx={{
-              padding: 3,
-              backgroundColor: "#111113",
-              borderColor: "rgba(255,255,255,0.07)",
-            }}
-          >
-            <Grid container spacing={3}>
+          {loading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+              <CircularProgress size={24} sx={{ color: "#2563EB" }} />
+            </Box>
+          ) : (
+            <Grid container spacing={2.5}>
               <Grid size={{ xs: 12 }}>
                 <TextField
                   label="Lookback Window (days)"
@@ -217,7 +269,7 @@ function Settings() {
                   sx={fieldSx}
                 />
               </Grid>
-              <Grid size={{ xs: 12 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Slow Request Threshold (ms)"
                   helperText="Endpoints averaging above this duration are flagged as SLOW_REQUEST"
@@ -228,7 +280,7 @@ function Settings() {
                   sx={fieldSx}
                 />
               </Grid>
-              <Grid size={{ xs: 12 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="High Error Rate Threshold (count)"
                   helperText="Endpoints with this many 4xx/5xx errors or more are flagged as HIGH_ERROR_RATE"
@@ -239,7 +291,7 @@ function Settings() {
                   sx={fieldSx}
                 />
               </Grid>
-              <Grid size={{ xs: 12 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Server Error Status Threshold"
                   helperText="Status codes at or above this value are counted as SERVER_ERROR (standard: 500)"
@@ -250,10 +302,10 @@ function Settings() {
                   sx={fieldSx}
                 />
               </Grid>
-              <Grid size={{ xs: 12 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Seq Scan Row Threshold"
-                  helperText="A captured EXPLAIN plan's Seq Scan is only flagged as MISSING_INDEX_CANDIDATE if the estimated row count exceeds this — filters out small tables where a full scan is the correct planner choice"
+                  helperText="A Seq Scan is only flagged as MISSING_INDEX_CANDIDATE if the estimated row count exceeds this"
                   type="number"
                   fullWidth
                   value={form.seqScanRowThreshold}
@@ -261,7 +313,7 @@ function Settings() {
                   sx={fieldSx}
                 />
               </Grid>
-              <Grid size={{ xs: 12 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Possible N+1 Query Threshold (count)"
                   helperText="If a single request triggers this many SQL statements or more, it's flagged as POSSIBLE_N_PLUS_ONE"
@@ -272,10 +324,10 @@ function Settings() {
                   sx={fieldSx}
                 />
               </Grid>
-              <Grid size={{ xs: 12 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Index Advisor: Min Avg Duration (ms)"
-                  helperText="Endpoints must average at least this duration to be considered as a heuristic missing-index candidate"
+                  helperText="Endpoints must average at least this duration to be considered a heuristic missing-index candidate"
                   type="number"
                   fullWidth
                   value={form.minAvgDurationMs}
@@ -286,7 +338,7 @@ function Settings() {
               <Grid size={{ xs: 12 }}>
                 <TextField
                   label="Index Advisor: Low Variance Threshold"
-                  helperText="Coefficient of variation (stdDev / avg) at or below this value is considered 'consistently slow' — a candidate signal for a missing index (e.g. 0.20 = requests typically vary by 20% or less from the average)"
+                  helperText="Coefficient of variation (stdDev / avg) at or below this value is considered 'consistently slow' — a candidate signal for a missing index (e.g. 0.20 = 20% variance)"
                   type="number"
                   inputProps={{ step: "0.01" }}
                   fullWidth
@@ -298,81 +350,65 @@ function Settings() {
 
               {saveError && (
                 <Grid size={{ xs: 12 }}>
-                  <Box
-                    sx={{
-                      padding: "8px 12px",
-                      borderRadius: "4px",
-                      color: "#F5A3A3",
-                      backgroundColor: "rgba(229,72,77,0.12)",
-                      fontSize: "14.5px",
-                    }}
-                  >
+                  <Alert severity="error" sx={{ borderRadius: "8px" }}>
                     Failed to save settings. Please try again.
-                  </Box>
+                  </Alert>
                 </Grid>
               )}
               {saveSuccess && (
                 <Grid size={{ xs: 12 }}>
-                  <Box
-                    sx={{
-                      padding: "8px 12px",
-                      borderRadius: "4px",
-                      color: "#8FD9A8",
-                      backgroundColor: "rgba(143,217,168,0.12)",
-                      fontSize: "14.5px",
-                    }}
-                  >
-                    Settings saved for {selectedApp}.
-                  </Box>
+                  <Alert severity="success" sx={{ borderRadius: "8px" }}>
+                    Settings saved for <strong>{selectedApp}</strong>.
+                  </Alert>
                 </Grid>
               )}
 
               <Grid size={{ xs: 12 }}>
                 <Button
+                  variant="contained"
                   onClick={handleSave}
                   disabled={saving || !selectedApp}
-                  sx={{
-                    textTransform: "none",
-                    color: "#EDEDEF",
-                    backgroundColor: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    padding: "6px 18px",
-                    fontSize: "14.5px",
-                    "&:hover": { backgroundColor: "rgba(255,255,255,0.09)" },
-                    "&.Mui-disabled": { color: "#57575F" },
-                  }}
+                  sx={{ bgcolor: "#2563EB", "&:hover": { bgcolor: "#1D4ED8" } }}
                 >
                   {saving ? "Saving..." : `Save Changes for ${selectedApp || "..."}`}
                 </Button>
               </Grid>
             </Grid>
-          </Paper>
-        )}
+          )}
+        </Paper>
 
-        {/* Delete Registered App — separate concern from Reset Data below.
-            This removes the Application row (registration + ingest key)
-            only; telemetry stays put under the plain-string applicationName
-            and picks back up if the same name is registered again later. */}
+        {/* Registered Applications */}
         <Paper
-          variant="outlined"
+          elevation={0}
           sx={{
-            padding: 3,
-            marginTop: 3,
-            backgroundColor: "#111113",
-            borderColor: "rgba(229,72,77,0.25)",
+            p: 3,
+            mb: 3,
+            border: "1px solid #FCA5A5",
+            borderRadius: "12px",
+            bgcolor: "#FFFFFF",
+            maxWidth: 680,
           }}
         >
-          <Typography variant="h6" sx={{ color: "#EDEDEF", fontSize: "16.5px", marginBottom: 0.5 }}>
-            Delete Registered App
-          </Typography>
-          <Typography variant="body2" sx={{ color: "#8C8C93", fontSize: "14.5px", marginBottom: 2 }}>
-            Permanently deletes the app's registration, API key, and ALL its telemetry + slow-query-plan data. This cannot be undone.
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+            <WarningAmberIcon fontSize="small" sx={{ color: "#EF4444" }} />
+            <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#0F172A" }}>
+              Delete Registered App
+            </Typography>
+          </Box>
+          <Typography sx={{ fontSize: 13, color: "#64748B", mb: 2.5 }}>
+            Permanently deletes the app's registration, API key, and ALL its telemetry + slow-query-plan data.
+            This cannot be undone.
           </Typography>
 
           {registeredLoading ? (
-            <Typography sx={{ color: "#57575F", fontSize: "14px" }}>Loading…</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <CircularProgress size={16} />
+              <Typography sx={{ fontSize: 13.5, color: "#64748B" }}>Loading apps…</Typography>
+            </Box>
           ) : registeredApps.length === 0 ? (
-            <Typography sx={{ color: "#57575F", fontSize: "14px" }}>No registered applications.</Typography>
+            <Typography sx={{ fontSize: 13.5, color: "#94A3B8" }}>
+              No registered applications found.
+            </Typography>
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {registeredApps.map((app) => (
@@ -382,25 +418,32 @@ function Settings() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    padding: "10px 14px",
+                    p: "10px 14px",
                     borderRadius: "8px",
-                    backgroundColor: "#0C0C0E",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    bgcolor: "#F8FAFC",
+                    border: "1px solid #E2E8F0",
                   }}
                 >
-                  <Typography sx={{ color: "#EDEDEF", fontFamily: "ui-monospace, monospace", fontSize: "14.5px" }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: 13.5,
+                      color: "#0F172A",
+                      fontWeight: 600,
+                    }}
+                  >
                     {app.name}
                   </Typography>
                   <Button
+                    size="small"
                     onClick={() => openDeleteDialog(app.name)}
                     sx={{
-                      textTransform: "none",
-                      color: "#F5A3A3",
-                      backgroundColor: "rgba(229,72,77,0.08)",
-                      border: "1px solid rgba(229,72,77,0.25)",
-                      padding: "4px 14px",
-                      fontSize: "13.5px",
-                      "&:hover": { backgroundColor: "rgba(229,72,77,0.14)" },
+                      color: "#DC2626",
+                      border: "1px solid #FCA5A5",
+                      bgcolor: "#FEF2F2",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      "&:hover": { bgcolor: "#FEE2E2", borderColor: "#EF4444" },
                     }}
                   >
                     Delete
@@ -411,79 +454,31 @@ function Settings() {
           )}
         </Paper>
 
-        <Dialog open={deleteTarget !== null} onClose={closeDeleteDialog} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ color: "#EDEDEF", backgroundColor: "#111113" }}>
-            Delete "{deleteTarget}" registration?
-          </DialogTitle>
-          <DialogContent sx={{ backgroundColor: "#111113" }}>
-            <DialogContentText sx={{ color: "#8C8C93", fontSize: "14px", marginBottom: 2 }}>
-              Removes the registration, key, and ALL telemetry + slow-query-plan data for{" "}
-              <strong style={{ color: "#EDEDEF" }}>{deleteTarget}</strong>. Cannot be undone. Type the app name below to confirm.
-            </DialogContentText>
-            <TextField
-              autoFocus
-              fullWidth
-              label={`Type "${deleteTarget}" to confirm`}
-              value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
-              sx={fieldSx}
-            />
-            {deleteError && (
-              <Box
-                sx={{
-                  marginTop: 2,
-                  padding: "8px 12px",
-                  borderRadius: "4px",
-                  color: "#F5A3A3",
-                  backgroundColor: "rgba(229,72,77,0.12)",
-                  fontSize: "13.5px",
-                }}
-              >
-                {typeof deleteError === "string" ? deleteError : "Delete failed."}
-              </Box>
-            )}
-          </DialogContent>
-          <DialogActions sx={{ backgroundColor: "#111113", padding: 2 }}>
-            <Button onClick={closeDeleteDialog} sx={{ textTransform: "none", color: "#8C8C93" }}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmDelete}
-              disabled={deleteConfirmText !== deleteTarget || deleting}
-              sx={{
-                textTransform: "none",
-                color: "#F5A3A3",
-                backgroundColor: "rgba(229,72,77,0.1)",
-                "&:hover": { backgroundColor: "rgba(229,72,77,0.18)" },
-                "&.Mui-disabled": { color: "#57575F", backgroundColor: "transparent" },
-              }}
-            >
-              {deleting ? "Deleting..." : "Delete Registration"}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Reset section — separate card, unchanged in shape (already correctly
-            per-app before this change), still lists every app regardless of
-            which one is selected above for threshold editing. */}
+        {/* Reset Application Data */}
         <Paper
-          variant="outlined"
+          elevation={0}
           sx={{
-            padding: 3,
-            marginTop: 3,
-            backgroundColor: "#111113",
-            borderColor: "rgba(229,72,77,0.25)",
+            p: 3,
+            mb: 3,
+            border: "1px solid #FCA5A5",
+            borderRadius: "12px",
+            bgcolor: "#FFFFFF",
+            maxWidth: 680,
           }}
         >
-          <Typography variant="h6" sx={{ color: "#EDEDEF", fontSize: "16.5px", marginBottom: 0.5 }}>
-            Reset Application Data
-          </Typography>
-          <Typography variant="body2" sx={{ color: "#8C8C93", fontSize: "14.5px", marginBottom: 2 }}>
-            Permanently deletes all telemetry and slow-query-plan records for the selected application only — other applications are never affected. This cannot be undone. Requires the admin reset token configured on the server.
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+            <WarningAmberIcon fontSize="small" sx={{ color: "#EF4444" }} />
+            <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#0F172A" }}>
+              Reset Application Data
+            </Typography>
+          </Box>
+          <Typography sx={{ fontSize: 13, color: "#64748B", mb: 2.5 }}>
+            Permanently deletes all telemetry and slow-query-plan records for the selected application only — other
+            applications are never affected. This cannot be undone. Requires the admin reset token configured on the server.
           </Typography>
 
           {apps.length === 0 ? (
-            <Typography sx={{ color: "#57575F", fontSize: "14px" }}>No applications found yet.</Typography>
+            <Typography sx={{ fontSize: 13.5, color: "#94A3B8" }}>No applications found yet.</Typography>
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {apps
@@ -495,25 +490,32 @@ function Settings() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      padding: "10px 14px",
+                      p: "10px 14px",
                       borderRadius: "8px",
-                      backgroundColor: "#0C0C0E",
-                      border: "1px solid rgba(255,255,255,0.06)",
+                      bgcolor: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
                     }}
                   >
-                    <Typography sx={{ color: "#EDEDEF", fontFamily: "ui-monospace, monospace", fontSize: "14.5px" }}>
+                    <Typography
+                      sx={{
+                        fontFamily: '"JetBrains Mono", monospace',
+                        fontSize: 13.5,
+                        color: "#0F172A",
+                        fontWeight: 600,
+                      }}
+                    >
                       {appName}
                     </Typography>
                     <Button
+                      size="small"
                       onClick={() => openResetDialog(appName)}
                       sx={{
-                        textTransform: "none",
-                        color: "#F5A3A3",
-                        backgroundColor: "rgba(229,72,77,0.08)",
-                        border: "1px solid rgba(229,72,77,0.25)",
-                        padding: "4px 14px",
-                        fontSize: "13.5px",
-                        "&:hover": { backgroundColor: "rgba(229,72,77,0.14)" },
+                        color: "#DC2626",
+                        border: "1px solid #FCA5A5",
+                        bgcolor: "#FEF2F2",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        "&:hover": { bgcolor: "#FEE2E2", borderColor: "#EF4444" },
                       }}
                     >
                       Reset Data
@@ -522,16 +524,70 @@ function Settings() {
                 ))}
             </Box>
           )}
+
+          {resetSuccess && (
+            <Alert severity="success" sx={{ mt: 2, borderRadius: "8px" }}>
+              Reset complete for {resetSuccess.applicationName}: {resetSuccess.telemetryRowsDeleted} telemetry rows,{" "}
+              {resetSuccess.slowQueryPlanRowsDeleted} slow-query-plan rows deleted.
+            </Alert>
+          )}
         </Paper>
 
+        {/* Delete App Dialog */}
+        <Dialog open={deleteTarget !== null} onClose={closeDeleteDialog} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 700, color: "#0F172A" }}>
+            Delete "{deleteTarget}" registration?
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ color: "#64748B", fontSize: 14, mb: 2 }}>
+              Removes the registration, key, and ALL telemetry + slow-query-plan data for{" "}
+              <strong style={{ color: "#0F172A" }}>{deleteTarget}</strong>. Cannot be undone. Type
+              the app name below to confirm.
+            </DialogContentText>
+            <TextField
+              autoFocus
+              fullWidth
+              label={`Type "${deleteTarget}" to confirm`}
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              sx={dialogFieldSx}
+            />
+            {deleteError && (
+              <Alert severity="error" sx={{ mt: 2, borderRadius: "8px" }}>
+                {typeof deleteError === "string" ? deleteError : "Delete failed."}
+              </Alert>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={closeDeleteDialog} sx={{ color: "#64748B" }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              disabled={deleteConfirmText !== deleteTarget || deleting}
+              sx={{
+                color: "#DC2626",
+                bgcolor: "#FEF2F2",
+                border: "1px solid #FCA5A5",
+                "&:hover": { bgcolor: "#FEE2E2" },
+                "&.Mui-disabled": { color: "#94A3B8", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" },
+              }}
+            >
+              {deleting ? "Deleting..." : "Delete Registration"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Reset Dialog */}
         <Dialog open={resetTarget !== null} onClose={closeResetDialog} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ color: "#EDEDEF", backgroundColor: "#111113" }}>
+          <DialogTitle sx={{ fontWeight: 700, color: "#0F172A" }}>
             Reset "{resetTarget}" data?
           </DialogTitle>
-          <DialogContent sx={{ backgroundColor: "#111113" }}>
-            <DialogContentText sx={{ color: "#8C8C93", fontSize: "14px", marginBottom: 2 }}>
+          <DialogContent>
+            <DialogContentText sx={{ color: "#64748B", fontSize: 14, mb: 2 }}>
               This permanently deletes all telemetry and slow-query-plan records for{" "}
-              <strong style={{ color: "#EDEDEF" }}>{resetTarget}</strong> only. Type the application name below to confirm, then enter the admin reset token.
+              <strong style={{ color: "#0F172A" }}>{resetTarget}</strong> only. Type the application
+              name below to confirm, then enter the admin reset token.
             </DialogContentText>
             <TextField
               autoFocus
@@ -539,7 +595,7 @@ function Settings() {
               label={`Type "${resetTarget}" to confirm`}
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
-              sx={{ marginBottom: 2, ...fieldSx }}
+              sx={{ mb: 2, ...dialogFieldSx }}
             />
             <TextField
               fullWidth
@@ -547,48 +603,33 @@ function Settings() {
               label="Admin reset token"
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
-              sx={fieldSx}
+              sx={dialogFieldSx}
             />
             {resetError && (
-              <Box
-                sx={{
-                  marginTop: 2,
-                  padding: "8px 12px",
-                  borderRadius: "4px",
-                  color: "#F5A3A3",
-                  backgroundColor: "rgba(229,72,77,0.12)",
-                  fontSize: "13.5px",
-                }}
-              >
+              <Alert severity="error" sx={{ mt: 2, borderRadius: "8px" }}>
                 Reset failed — check the token is correct and try again.
-              </Box>
+              </Alert>
             )}
           </DialogContent>
-          <DialogActions sx={{ backgroundColor: "#111113", padding: 2 }}>
-            <Button onClick={closeResetDialog} sx={{ textTransform: "none", color: "#8C8C93" }}>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={closeResetDialog} sx={{ color: "#64748B" }}>
               Cancel
             </Button>
             <Button
               onClick={handleConfirmReset}
               disabled={confirmText !== resetTarget || !tokenInput || resetting}
               sx={{
-                textTransform: "none",
-                color: "#F5A3A3",
-                backgroundColor: "rgba(229,72,77,0.1)",
-                "&:hover": { backgroundColor: "rgba(229,72,77,0.18)" },
-                "&.Mui-disabled": { color: "#57575F", backgroundColor: "transparent" },
+                color: "#DC2626",
+                bgcolor: "#FEF2F2",
+                border: "1px solid #FCA5A5",
+                "&:hover": { bgcolor: "#FEE2E2" },
+                "&.Mui-disabled": { color: "#94A3B8", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0" },
               }}
             >
               {resetting ? "Resetting..." : "Permanently Reset"}
             </Button>
           </DialogActions>
         </Dialog>
-
-        {resetSuccess && (
-          <Typography sx={{ color: "#8FD9A8", fontSize: "13.5px", marginTop: 1.5 }}>
-            Reset complete for {resetSuccess.applicationName}: {resetSuccess.telemetryRowsDeleted} telemetry rows, {resetSuccess.slowQueryPlanRowsDeleted} slow-query-plan rows deleted.
-          </Typography>
-        )}
       </Box>
     </>
   );

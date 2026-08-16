@@ -1,24 +1,26 @@
 import { useState } from "react";
-import { Box, Typography, TextField, Button, Paper, CircularProgress, IconButton } from "@mui/material";
+import { Box, Typography, TextField, Button, Paper, CircularProgress, IconButton, Alert, Chip } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import AddIcon from "@mui/icons-material/Add";
 import Header from "../components/Header";
 import useBusinessContext from "../hooks/useBusinessContext";
 import { useSelectedApp } from "../contexts/AppContext";
 
-// Same dark-theme field styling used on Settings.jsx, kept local rather than
-// shared since it's only these two pages that need it.
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
-    backgroundColor: "#0C0C0E",
-    "& fieldset": { borderColor: "rgba(255,255,255,0.07)" },
-    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.14)" },
-    "&.Mui-focused fieldset": { borderColor: "#5B7CFF" },
+    bgcolor: "#FFFFFF",
+    fontSize: 14,
+    "& fieldset": { borderColor: "#E2E8F0" },
+    "&:hover fieldset": { borderColor: "#CBD5E1" },
+    "&.Mui-focused fieldset": { borderColor: "#2563EB" },
   },
-  "& .MuiInputLabel-root": { color: "#8C8C93", fontSize: "14.5px" },
-  "& .MuiInputBase-input": { color: "#EDEDEF", fontSize: "14.5px" },
+  "& .MuiInputLabel-root": { color: "#64748B", fontSize: "14px" },
+  "& .MuiInputBase-input": { color: "#0F172A", fontSize: "14px" },
+  "& .MuiFormHelperText-root": { color: "#94A3B8", fontSize: "12px" },
 };
 
-function BusinessContext() {
+function BusinessContext({ onMobileMenuToggle }) {
   const { selectedApp } = useSelectedApp();
   const { entries, loading, saving, saveEntry, deleteEntry } = useBusinessContext(selectedApp);
 
@@ -30,7 +32,7 @@ function BusinessContext() {
     if (!endpoint.trim() || !description.trim()) return;
     const result = await saveEntry(endpoint.trim(), description.trim());
     if (result.ok) {
-      setSaveMsg("Saved.");
+      setSaveMsg("Note saved successfully.");
       setEndpoint("");
       setDescription("");
       setTimeout(() => setSaveMsg(null), 2500);
@@ -39,33 +41,71 @@ function BusinessContext() {
 
   return (
     <>
-      <Header />
-      <Box sx={{ marginLeft: "220px", marginTop: "64px", padding: 4, maxWidth: 720 }}>
+      <Header onMobileMenuToggle={onMobileMenuToggle} />
+      <Box
+        component="main"
+        sx={{
+          marginLeft: { xs: 0, md: "248px" },
+          marginTop: "64px",
+          padding: { xs: 2.5, sm: 3, md: 4 },
+          bgcolor: "#F8FAFC",
+          minHeight: "calc(100vh - 64px)",
+        }}
+      >
+        {/* Page header */}
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: "10px",
+                bgcolor: "#F0FDF4",
+                color: "#10B981",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <DescriptionOutlinedIcon fontSize="small" />
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "#0F172A" }}>
+              Business Context
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: "#64748B", maxWidth: 680 }}>
+            Tell VeloxDiag what an endpoint does for{" "}
+            <strong style={{ color: "#0F172A" }}>{selectedApp || "the selected application"}</strong>.
+            The AI on the Diagnosis page uses this to tie technical root causes to their real-world impact — e.g.
+            instead of just "N+1 query pattern," it can add "which matters here because this is the page students
+            check right before an exam."
+          </Typography>
+        </Box>
 
-        <Typography variant="h5" sx={{ marginBottom: 1, color: "#EDEDEF" }}>
-          Business Context
-        </Typography>
-        <Typography variant="body2" sx={{ color: "#8C8C93", marginBottom: 3, fontSize: "15.5px" }}>
-          Tell VeloxDiag what an endpoint actually does for a real user, for{" "}
-          <strong style={{ color: "#EDEDEF" }}>{selectedApp || "the selected application"}</strong>.
-          The AI explanation on the Diagnosis page uses this to tie a technical root cause to
-          its real-world consequence — e.g. instead of just "N+1 query pattern," it can add
-          "which matters here because this is the page students check right before an exam."
-          Endpoints with no note here still get a technical-only explanation, exactly as before.
-        </Typography>
-
+        {/* Add note form */}
         <Paper
-          variant="outlined"
-          sx={{ padding: 3, marginBottom: 3, backgroundColor: "#111113", borderColor: "rgba(255,255,255,0.07)" }}
+          elevation={0}
+          sx={{
+            p: 3,
+            mb: 4,
+            border: "1px solid #E2E8F0",
+            borderRadius: "12px",
+            bgcolor: "#FFFFFF",
+            maxWidth: 720,
+          }}
         >
+          <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#0F172A", mb: 2 }}>
+            Add Endpoint Note
+          </Typography>
+
           <TextField
             label="Endpoint (normalized form)"
             placeholder="/api/exams/{id}/submit"
             fullWidth
             value={endpoint}
             onChange={(e) => setEndpoint(e.target.value)}
-            helperText="Use {id} for dynamic segments — matches how endpoints are grouped elsewhere in the dashboard (e.g. /api/exams/{id}, not /api/exams/9a352dba-...)"
-            sx={{ marginBottom: 2, ...fieldSx }}
+            helperText="Use {id} for dynamic segments — matches how endpoints are grouped elsewhere in the dashboard."
+            sx={{ mb: 2, ...fieldSx }}
           />
           <TextField
             label="What does this endpoint do for the user?"
@@ -76,78 +116,110 @@ function BusinessContext() {
             maxRows={4}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            sx={{ marginBottom: 2, ...fieldSx }}
+            sx={{ mb: 2.5, ...fieldSx }}
           />
+
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button
+              variant="contained"
+              startIcon={saving ? <CircularProgress size={14} color="inherit" /> : <AddIcon />}
               onClick={handleAdd}
               disabled={saving || !selectedApp || !endpoint.trim() || !description.trim()}
               sx={{
-                textTransform: "none",
-                color: "#EDEDEF",
-                backgroundColor: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                padding: "6px 18px",
-                fontSize: "14.5px",
-                "&:hover": { backgroundColor: "rgba(255,255,255,0.09)" },
-                "&.Mui-disabled": { color: "#57575F" },
+                bgcolor: "#2563EB",
+                px: 2.5,
+                "&:hover": { bgcolor: "#1D4ED8" },
               }}
             >
               {saving ? "Saving..." : "Save Note"}
             </Button>
             {saveMsg && (
-              <Typography sx={{ fontSize: "13.5px", color: "#8FD9A8" }}>{saveMsg}</Typography>
+              <Alert severity="success" sx={{ py: 0.25, px: 1.5, borderRadius: "8px", fontSize: 13 }}>
+                {saveMsg}
+              </Alert>
             )}
           </Box>
         </Paper>
 
-        <Typography sx={{ fontSize: 14.5, fontWeight: 500, color: "#EDEDEF", marginBottom: 1.5 }}>
-          Existing Notes
-        </Typography>
-
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", padding: 4 }}>
-            <CircularProgress size={22} />
-          </Box>
-        ) : entries.length === 0 ? (
-          <Typography sx={{ fontSize: 14, color: "text.secondary" }}>
-            No business context notes yet for {selectedApp || "this application"}.
-          </Typography>
-        ) : (
-          entries.map((entry) => (
-            <Paper
-              key={entry.id}
-              variant="outlined"
-              sx={{
-                padding: "12px 16px",
-                marginBottom: 1,
-                borderColor: "rgba(255,255,255,0.07)",
-                borderRadius: "8px",
-                backgroundColor: "#111113",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Typography sx={{ fontFamily: "ui-monospace, monospace", fontSize: 13, color: "#C3CCFF", marginBottom: 0.5 }}>
-                  {entry.endpoint}
-                </Typography>
-                <Typography sx={{ fontSize: 13.5, color: "#B0B0B6" }}>
-                  {entry.description}
-                </Typography>
-              </Box>
-              <IconButton
+        {/* Existing notes list */}
+        <Box sx={{ maxWidth: 720 }}>
+          <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#0F172A", mb: 1.5 }}>
+            Existing Notes
+            {!loading && entries.length > 0 && (
+              <Chip
+                label={entries.length}
                 size="small"
-                onClick={() => deleteEntry(entry.endpoint)}
-                sx={{ color: "#6B6B73", "&:hover": { color: "#F5A3A3" } }}
-              >
-                <DeleteOutlineIcon fontSize="small" />
-              </IconButton>
+                sx={{ ml: 1.5, height: 20, fontSize: 11, fontWeight: 700, bgcolor: "#EFF6FF", color: "#2563EB", border: "1px solid #BFDBFE" }}
+              />
+            )}
+          </Typography>
+
+          {loading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+              <CircularProgress size={24} sx={{ color: "#2563EB" }} />
+            </Box>
+          ) : entries.length === 0 ? (
+            <Paper
+              elevation={0}
+              sx={{ p: 4, textAlign: "center", border: "1px solid #E2E8F0", borderRadius: "12px", bgcolor: "#FFFFFF" }}
+            >
+              <Typography variant="body2" sx={{ color: "#94A3B8" }}>
+                No business context notes yet for{" "}
+                {selectedApp ? <strong>{selectedApp}</strong> : "this application"}.
+              </Typography>
             </Paper>
-          ))
-        )}
+          ) : (
+            entries.map((entry) => (
+              <Paper
+                key={entry.id}
+                elevation={0}
+                sx={{
+                  p: 2,
+                  mb: 1.5,
+                  border: "1px solid #E2E8F0",
+                  borderRadius: "10px",
+                  bgcolor: "#FFFFFF",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  gap: 2,
+                  transition: "box-shadow 0.15s",
+                  "&:hover": { boxShadow: "0 2px 8px rgba(15, 23, 42, 0.06)" },
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: '"JetBrains Mono", "IBM Plex Mono", monospace',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#2563EB",
+                      mb: 0.5,
+                      wordBreak: "break-all",
+                    }}
+                  >
+                    {entry.endpoint}
+                  </Typography>
+                  <Typography sx={{ fontSize: 13.5, color: "#475569", lineHeight: 1.6 }}>
+                    {entry.description}
+                  </Typography>
+                </Box>
+                <IconButton
+                  size="small"
+                  onClick={() => deleteEntry(entry.endpoint)}
+                  sx={{
+                    color: "#94A3B8",
+                    flexShrink: 0,
+                    "&:hover": { color: "#EF4444", bgcolor: "#FEF2F2" },
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <DeleteOutlineIcon fontSize="small" />
+                </IconButton>
+              </Paper>
+            ))
+          )}
+        </Box>
       </Box>
     </>
   );

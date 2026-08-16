@@ -1,19 +1,11 @@
 import { useState } from "react";
-import { Box, Typography, TextField, Button, Tabs, Tab, Alert } from "@mui/material";
+import { Box, Typography, TextField, Button, Tabs, Tab, Alert, Paper } from "@mui/material";
+import BoltIcon from "@mui/icons-material/Bolt";
 import apiClient from "../api/client";
 
 const TOKEN_KEY = "veloxdiag_session_token";
 const EMAIL_KEY = "veloxdiag_session_email";
 
-/**
- * Real per-user login/register — replaces the old shared-secret AccessGate.
- * Talks to AuthController (/api/auth/register, /api/auth/login) on the
- * backend. Session token stored in localStorage; apiClient's interceptor
- * (see api/client.js) attaches it as a Bearer token on every request.
- *
- * "Sign out" is exposed on window for the same reason the old AccessGate
- * did it — rare action, not worth threading through props/context everywhere.
- */
 function LoginGate({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
   const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY) || "");
@@ -24,7 +16,7 @@ function LoginGate({ children }) {
   const [loading, setLoading] = useState(false);
 
   const handleSignOut = () => {
-    apiClient.post("/api/auth/logout").catch(() => {}); // best-effort, don't block sign-out on it
+    apiClient.post("/api/auth/logout").catch(() => {});
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(EMAIL_KEY);
     setToken("");
@@ -63,26 +55,71 @@ function LoginGate({ children }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#0C0C0E",
+        backgroundColor: "#F8FAFC",
+        padding: 2,
       }}
     >
-      <Box sx={{ width: 360, textAlign: "center" }}>
-        <Typography sx={{ fontSize: 20, fontWeight: 600, color: "#EDEDEF", marginBottom: 0.5 }}>
-          VeloxDiag
-        </Typography>
-        <Typography sx={{ fontSize: 13.5, color: "#8C8C93", marginBottom: 2.5 }}>
-          {mode === "login" ? "Log in to see your applications." : "Create an account to start monitoring."}
+      <Paper
+        elevation={0}
+        sx={{
+          width: 400,
+          p: 4,
+          borderRadius: "16px",
+          backgroundColor: "#FFFFFF",
+          border: "1px solid #E2E8F0",
+          boxShadow: "0 10px 25px -5px rgba(15, 23, 42, 0.08)",
+          textAlign: "center",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 1 }}>
+          <Box
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: "10px",
+              bgcolor: "#EFF6FF",
+              color: "#2563EB",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <BoltIcon fontSize="medium" />
+          </Box>
+          <Typography sx={{ fontSize: 24, fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em" }}>
+            VeloxDiag
+          </Typography>
+        </Box>
+
+        <Typography sx={{ fontSize: 13.5, color: "#64748B", mb: 3 }}>
+          {mode === "login" ? "Sign in to access your APM dashboard" : "Create an account to begin monitoring"}
         </Typography>
 
         <Tabs
           value={mode}
           onChange={(_, v) => { setMode(v); setError(null); }}
-          centered
+          variant="fullWidth"
           sx={{
-            marginBottom: 2.5,
-            minHeight: 36,
-            "& .MuiTab-root": { minHeight: 36, fontSize: 13, textTransform: "none", color: "#8C8C93" },
-            "& .Mui-selected": { color: "#EDEDEF !important" },
+            marginBottom: 3,
+            minHeight: 40,
+            bgcolor: "#F1F5F9",
+            borderRadius: "8px",
+            padding: "4px",
+            "& .MuiTabs-indicator": { display: "none" },
+            "& .MuiTab-root": {
+              minHeight: 32,
+              fontSize: 13.5,
+              fontWeight: 600,
+              textTransform: "none",
+              color: "#64748B",
+              borderRadius: "6px",
+              transition: "all 0.15s",
+            },
+            "& .Mui-selected": {
+              color: "#0F172A !important",
+              backgroundColor: "#FFFFFF",
+              boxShadow: "0 1px 3px rgba(15, 23, 42, 0.08)",
+            },
           }}
         >
           <Tab label="Log in" value="login" />
@@ -90,14 +127,15 @@ function LoginGate({ children }) {
         </Tabs>
 
         {error && (
-          <Alert severity="error" sx={{ marginBottom: 2, fontSize: 13, textAlign: "left" }}>
+          <Alert severity="error" sx={{ marginBottom: 2.5, fontSize: 13, textAlign: "left", borderRadius: "8px" }}>
             {error}
           </Alert>
         )}
 
         <TextField
           type="email"
-          placeholder="Email"
+          label="Email address"
+          placeholder="developer@company.com"
           fullWidth
           value={formEmail}
           onChange={(e) => setFormEmail(e.target.value)}
@@ -105,40 +143,46 @@ function LoginGate({ children }) {
         />
         <TextField
           type="password"
-          placeholder={mode === "register" ? "Password (min 8 characters)" : "Password"}
+          label="Password"
+          placeholder={mode === "register" ? "Minimum 8 characters" : "Enter password"}
           fullWidth
           value={formPassword}
           onChange={(e) => setFormPassword(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          sx={{ ...fieldSx, marginTop: 1.5, marginBottom: 2.5 }}
+          sx={{ ...fieldSx, marginTop: 2, marginBottom: 3 }}
         />
 
         <Button
           fullWidth
+          variant="contained"
           onClick={handleSubmit}
           disabled={loading}
           sx={{
-            textTransform: "none",
-            color: "#EDEDEF",
-            backgroundColor: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            padding: "8px 0",
-            "&:hover": { backgroundColor: "rgba(255,255,255,0.09)" },
+            py: 1.2,
+            fontSize: 14,
+            fontWeight: 700,
+            bgcolor: "#2563EB",
+            "&:hover": { bgcolor: "#1D4ED8" },
           }}
         >
-          {loading ? "..." : mode === "login" ? "Log in" : "Create account"}
+          {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
         </Button>
-      </Box>
+      </Paper>
     </Box>
   );
 }
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
-    backgroundColor: "#111113",
-    "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+    backgroundColor: "#FFFFFF",
+    fontSize: 14,
+    borderRadius: "8px",
+    "& fieldset": { borderColor: "#E2E8F0" },
+    "&:hover fieldset": { borderColor: "#CBD5E1" },
+    "&.Mui-focused fieldset": { borderColor: "#2563EB" },
   },
-  "& .MuiInputBase-input": { color: "#EDEDEF", fontSize: 14 },
+  "& .MuiInputLabel-root": { color: "#64748B", fontSize: 14 },
+  "& .MuiInputBase-input": { color: "#0F172A" },
 };
 
 export default LoginGate;

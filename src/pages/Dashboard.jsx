@@ -1,4 +1,9 @@
-import { Grid, Box, Typography, CircularProgress } from "@mui/material";
+import { Grid, Box, Typography, CircularProgress, Paper, Chip, Stack } from "@mui/material";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
+import TimerIcon from "@mui/icons-material/Timer";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import Header from "../components/Header";
 import StatCard from "../components/StatCard";
 import TrendChart from "../components/TrendChart";
@@ -6,53 +11,200 @@ import DashboardAiSummary from "../components/DashboardAiSummary";
 import useDashboardMetrics from "../hooks/useDashboardMetrics";
 import { useSelectedApp } from "../contexts/AppContext";
 
-// Same severity ramp as FindingCard — duration bands reused here so a slow
-// endpoint reads the same way whether you see it on the Dashboard or on the
-// Diagnosis page, instead of two different visual languages for the same
-// underlying signal.
 function severityForDuration(ms) {
-  if (ms >= 3000) return { dot: "#E5484D", text: "#F5A3A3" };
-  if (ms >= 1000) return { dot: "#D9A24B", text: "#F0C989" };
-  return { dot: "#5B7CFF", text: "#C3CCFF" };
+  if (ms >= 3000) return { dot: "#DC2626", text: "#991B1B", bg: "#FEF2F2", border: "#FCA5A5" };
+  if (ms >= 1000) return { dot: "#D97706", text: "#92400E", bg: "#FFFBEB", border: "#FCD34D" };
+  return { dot: "#2563EB", text: "#1E40AF", bg: "#EFF6FF", border: "#BFDBFE" };
 }
 
-function SlowEndpointRow({ endpoint, avgDuration, count }) {
+function SlowEndpointRow({ endpoint, avgDuration, count, rank }) {
   const style = severityForDuration(avgDuration);
+  const barWidth = Math.min(100, (avgDuration / 5000) * 100);
+
   return (
     <Box
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: 1.5,
-        py: 1,
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
+        justifyContent: "space-between",
+        gap: 2,
+        py: 1.75,
+        px: 2.5,
+        borderBottom: "1px solid #F8FAFC",
         "&:last-of-type": { borderBottom: "none" },
+        "&:hover": { bgcolor: "#F8FAFC" },
+        transition: "background-color 0.15s ease",
+        position: "relative",
       }}
     >
-      <Box sx={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: style.dot, flexShrink: 0 }} />
-      <Typography sx={{ fontFamily: "ui-monospace, monospace", fontSize: 14, color: "#EDEDEF", flex: 1 }}>
-        {endpoint}
-      </Typography>
+      {/* Rank number */}
       <Typography
         sx={{
-          fontFamily: "ui-monospace, monospace",
-          fontSize: 14,
-          color: style.text,
-          fontVariantNumeric: "tabular-nums",
-          minWidth: 70,
-          textAlign: "right",
+          fontSize: 11.5,
+          fontWeight: 700,
+          color: "#CBD5E1",
+          fontFamily: '"JetBrains Mono", monospace',
+          minWidth: 18,
+          flexShrink: 0,
         }}
       >
-        {avgDuration.toFixed(0)}ms
+        {String(rank).padStart(2, "0")}
       </Typography>
-      <Typography sx={{ fontSize: 12.5, color: "text.disabled", minWidth: 90, textAlign: "right" }}>
-        {count} requests
-      </Typography>
+
+      {/* Dot + Endpoint */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, minWidth: 0 }}>
+        <Box
+          sx={{
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            backgroundColor: style.dot,
+            flexShrink: 0,
+            boxShadow: `0 0 0 3px ${style.bg}`,
+          }}
+        />
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            sx={{
+              fontFamily: '"JetBrains Mono", "IBM Plex Mono", monospace',
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#0F172A",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              mb: 0.5,
+            }}
+          >
+            {endpoint}
+          </Typography>
+          {/* Mini progress bar */}
+          <Box sx={{ height: 3, bgcolor: "#F1F5F9", borderRadius: 2, overflow: "hidden" }}>
+            <Box
+              sx={{
+                height: "100%",
+                width: `${barWidth}%`,
+                bgcolor: style.dot,
+                borderRadius: 2,
+                opacity: 0.7,
+              }}
+            />
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Stats */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+        <Chip
+          label={`${avgDuration.toFixed(0)}ms`}
+          size="small"
+          sx={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: 12,
+            fontWeight: 700,
+            color: style.text,
+            bgcolor: style.bg,
+            border: `1px solid ${style.border}`,
+            height: 22,
+            borderRadius: "6px",
+          }}
+        />
+        <Typography
+          sx={{
+            fontSize: 12,
+            color: "#94A3B8",
+            fontWeight: 500,
+            minWidth: 70,
+            textAlign: "right",
+            display: { xs: "none", sm: "block" },
+          }}
+        >
+          {count} req{count !== 1 ? "s" : ""}
+        </Typography>
+      </Box>
     </Box>
   );
 }
 
-function Dashboard() {
+function PageHeader({ selectedApp }) {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const dateStr = now.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+
+  return (
+    <Box
+      sx={{
+        mb: 3.5,
+        display: "flex",
+        alignItems: { xs: "flex-start", sm: "center" },
+        justifyContent: "space-between",
+        flexDirection: { xs: "column", sm: "row" },
+        gap: 2,
+      }}
+    >
+      <Box>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+          <Box
+            sx={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              bgcolor: "#2563EB",
+            }}
+          />
+          <Typography
+            sx={{
+              fontSize: 11.5,
+              fontWeight: 700,
+              color: "#2563EB",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            Dashboard
+          </Typography>
+        </Stack>
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: 800, color: "#0F172A", letterSpacing: "-0.03em", mb: 0.4 }}
+        >
+          Performance Overview
+        </Typography>
+        <Typography variant="body2" sx={{ color: "#64748B" }}>
+          Monitoring{" "}
+          <Box
+            component="span"
+            sx={{
+              fontWeight: 700,
+              color: "#0F172A",
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: 12.5,
+            }}
+          >
+            {selectedApp || "all applications"}
+          </Box>{" "}
+          · Real-time telemetry and AI diagnostics
+        </Typography>
+      </Box>
+
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+        <TrendingUpIcon sx={{ fontSize: 14, color: "#94A3B8" }} />
+        <Typography
+          sx={{
+            fontSize: 12,
+            color: "#94A3B8",
+            fontFamily: '"JetBrains Mono", monospace',
+            fontWeight: 500,
+          }}
+        >
+          {dateStr} · {timeStr}
+        </Typography>
+      </Stack>
+    </Box>
+  );
+}
+
+function Dashboard({ onMobileMenuToggle }) {
   const { selectedApp } = useSelectedApp();
   const { summary, slowEndpoints, trends, loading, error } = useDashboardMetrics({
     applicationName: selectedApp,
@@ -63,99 +215,283 @@ function Dashboard() {
 
   const totalRequests = summary?.totalRequests ?? 0;
   const errorCount = summary?.errorRequests ?? 0;
-  // Defaults to 100 (not 0) when summary hasn't loaded yet, so the card
-  // never flashes "critically unhealthy" for a split second on initial load
-  // before real data arrives.
   const healthScore = summary?.healthScore ?? 100;
   const avgSlowDuration =
     safeSlowEndpoints.length > 0
-      ? Math.round(safeSlowEndpoints.reduce((sum, e) => sum + e.avgDuration, 0) / safeSlowEndpoints.length)
+      ? Math.round(
+          safeSlowEndpoints.reduce((sum, e) => sum + e.avgDuration, 0) / safeSlowEndpoints.length
+        )
       : 0;
 
   const trendHistory = safeTrends.map((t) => t.avgDuration ?? 0);
 
+  const SIDEBAR_W = 248;
+  const HEADER_H = 64;
+
   return (
     <>
-      <Header />
-      <Box sx={{ marginLeft: "220px", marginTop: "64px", padding: 4 }}>
+      <Header onMobileMenuToggle={onMobileMenuToggle} />
+      <Box
+        component="main"
+        sx={{
+          marginLeft: { xs: 0, md: `${SIDEBAR_W}px` },
+          marginTop: `${HEADER_H}px`,
+          padding: { xs: 2.5, sm: 3, md: "32px 36px" },
+          bgcolor: "#F8FAFC",
+          minHeight: `calc(100vh - ${HEADER_H}px)`,
+        }}
+      >
+        <PageHeader selectedApp={selectedApp} />
 
+        {/* Error banner */}
         {error && (
-          <Typography
+          <Box
             sx={{
-              display: "inline-block",
-              fontSize: 13.5,
-              color: "#F5A3A3",
-              border: "1px solid rgba(229,72,77,0.25)",
-              backgroundColor: "rgba(229,72,77,0.08)",
-              borderRadius: 10,
-              padding: "4px 12px",
-              marginBottom: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#991B1B",
+              border: "1px solid #FCA5A5",
+              backgroundColor: "#FEF2F2",
+              borderRadius: "10px",
+              padding: "12px 16px",
+              mb: 3,
             }}
           >
-            Could not reach VeloxDiag server — showing last known data
-          </Typography>
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                bgcolor: "#DC2626",
+                flexShrink: 0,
+              }}
+            />
+            VeloxDiag backend unreachable — displaying cached telemetry data
+          </Box>
         )}
 
+        {/* AI Summary */}
         {!loading && <DashboardAiSummary applicationName={selectedApp} />}
 
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", padding: 8 }}>
-            <CircularProgress size={24} sx={{ color: "text.disabled" }} />
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 12 }}>
+            <Box sx={{ textAlign: "center" }}>
+              <CircularProgress size={32} sx={{ color: "#2563EB", mb: 2 }} />
+              <Typography sx={{ fontSize: 13, color: "#94A3B8", fontWeight: 500 }}>
+                Loading telemetry data...
+              </Typography>
+            </Box>
           </Box>
         ) : (
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 3 }}>
+          <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
+            {/* Stat Cards */}
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <StatCard
                 title="Health Score"
                 value={healthScore}
                 unit="/100"
                 thresholds={{ warning: 70, critical: 40 }}
                 reverseThresholds
+                icon={<FavoriteIcon sx={{ fontSize: 18 }} />}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <StatCard title="Total Requests" value={totalRequests} unit="" />
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <StatCard
+                title="Total Requests"
+                value={totalRequests.toLocaleString()}
+                unit=""
+                icon={<BarChartIcon sx={{ fontSize: 18 }} />}
+              />
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <StatCard title="Errors" value={errorCount} unit=""
-                thresholds={{ warning: 5, critical: 15 }} invert />
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <StatCard
+                title="Errors"
+                value={errorCount}
+                unit=""
+                thresholds={{ warning: 5, critical: 15 }}
+                invert
+                icon={<ErrorOutlineIcon sx={{ fontSize: 18 }} />}
+              />
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <StatCard title="Avg Slow Endpoint Duration" value={avgSlowDuration} unit="ms"
-                thresholds={{ warning: 1000, critical: 3000 }} invert />
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <StatCard
+                title="Avg Slow Duration"
+                value={avgSlowDuration}
+                unit="ms"
+                thresholds={{ warning: 1000, critical: 3000 }}
+                invert
+                icon={<TimerIcon sx={{ fontSize: 18 }} />}
+              />
             </Grid>
 
+            {/* Trend Chart */}
             <Grid size={{ xs: 12 }}>
               {trendHistory.length > 0 ? (
                 <TrendChart history={trendHistory} />
               ) : (
-                <Typography sx={{ fontSize: 14.5, color: "text.secondary" }}>
-                  Not enough data yet to show trends. Trends need more telemetry over time.
-                </Typography>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 4,
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "14px",
+                    bgcolor: "#FFFFFF",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    sx={{ fontSize: 14, color: "#94A3B8", fontWeight: 500, lineHeight: 1.6 }}
+                  >
+                    Collecting historical telemetry. Trend charts will populate as requests are
+                    monitored over time.
+                  </Typography>
+                </Paper>
               )}
             </Grid>
 
+            {/* Slow Endpoints Table */}
             <Grid size={{ xs: 12 }}>
-              <Typography sx={{ fontSize: 16.5, fontWeight: 500, color: "#EDEDEF", marginBottom: 1.5 }}>
-                Slow Endpoints
-              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 1.75,
+                  flexWrap: "wrap",
+                  gap: 1,
+                }}
+              >
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: 15,
+                      fontWeight: 800,
+                      color: "#0F172A",
+                      letterSpacing: "-0.02em",
+                      mb: 0.25,
+                    }}
+                  >
+                    Slow Endpoints
+                  </Typography>
+                  <Typography sx={{ fontSize: 12.5, color: "#64748B" }}>
+                    Endpoints exceeding the slow-request threshold, ordered by average latency
+                  </Typography>
+                </Box>
+                {safeSlowEndpoints.length > 0 && (
+                  <Chip
+                    label={`${safeSlowEndpoints.length} endpoint${safeSlowEndpoints.length !== 1 ? "s" : ""}`}
+                    size="small"
+                    sx={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      bgcolor: "#FEF2F2",
+                      color: "#991B1B",
+                      border: "1px solid #FCA5A5",
+                      height: 24,
+                      borderRadius: "6px",
+                    }}
+                  />
+                )}
+              </Box>
+
               {safeSlowEndpoints.length === 0 ? (
-                <Typography sx={{ fontSize: 14.5, color: "text.secondary" }}>
-                  No slow endpoints recorded.
-                </Typography>
-              ) : (
-                <Box
+                <Paper
+                  elevation={0}
                   sx={{
-                    backgroundColor: "#111113",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    borderRadius: "10px",
-                    padding: "4px 16px",
+                    p: 5,
+                    textAlign: "center",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "14px",
+                    bgcolor: "#FFFFFF",
                   }}
                 >
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: "50%",
+                      bgcolor: "#ECFDF5",
+                      color: "#059669",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mb: 1.5,
+                      fontSize: 22,
+                    }}
+                  >
+                    ✓
+                  </Box>
+                  <Typography
+                    sx={{ fontSize: 14.5, fontWeight: 800, color: "#0F172A", mb: 0.5 }}
+                  >
+                    No Slow Endpoints Detected
+                  </Typography>
+                  <Typography sx={{ fontSize: 13, color: "#64748B", maxWidth: 380, mx: "auto" }}>
+                    All endpoints for{" "}
+                    <strong>{selectedApp || "this application"}</strong> are responding
+                    within normal thresholds.
+                  </Typography>
+                </Paper>
+              ) : (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    backgroundColor: "#FFFFFF",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "14px",
+                    overflow: "hidden",
+                    boxShadow: "0 1px 4px rgba(15, 23, 42, 0.04)",
+                  }}
+                >
+                  {/* Table header */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      px: 2.5,
+                      py: 1.5,
+                      borderBottom: "1px solid #F1F5F9",
+                      bgcolor: "#FAFBFC",
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        color: "#94A3B8",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
+                      }}
+                    >
+                      Endpoint
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        color: "#94A3B8",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
+                      }}
+                    >
+                      Avg Duration
+                    </Typography>
+                  </Box>
+
                   {safeSlowEndpoints.map((ep, i) => (
-                    <SlowEndpointRow key={i} endpoint={ep.endpoint} avgDuration={ep.avgDuration} count={ep.count} />
+                    <SlowEndpointRow
+                      key={i}
+                      rank={i + 1}
+                      endpoint={ep.endpoint}
+                      avgDuration={ep.avgDuration}
+                      count={ep.count}
+                    />
                   ))}
-                </Box>
+                </Paper>
               )}
             </Grid>
           </Grid>

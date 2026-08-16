@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Box, Button, CircularProgress, Typography, Alert } from "@mui/material";
+import { Box, Button, CircularProgress, Typography, Alert, Paper } from "@mui/material";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import axios from "axios";
 
-// Swap this for wherever your existing axios instance / base URL config lives
-// (you already have one — same place TelemetryClient's POST URL bug was fixed).
 const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function EndpointNarrative({ endpoint }) {
@@ -17,7 +16,7 @@ export default function EndpointNarrative({ endpoint }) {
     try {
       const res = await axios.get(`${API_BASE}/api/diagnosis/narrative`, {
         params: { endpoint },
-        timeout: 20000, // Render cold starts — same reasoning as your other axios calls
+        timeout: 20000,
       });
       setNarrative(res.data.narrative);
     } catch (err) {
@@ -29,20 +28,33 @@ export default function EndpointNarrative({ endpoint }) {
 
   if (narrative) {
     return (
-      <Box sx={{ mt: 1, p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}>
-        <Typography variant="body2">{narrative}</Typography>
-      </Box>
+      <Paper elevation={0} sx={{ mt: 1, p: 2, bgcolor: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: "8px" }}>
+        <Typography sx={{ fontSize: 13.5, color: "#1E40AF", lineHeight: 1.6 }}>{narrative}</Typography>
+      </Paper>
     );
   }
 
   return (
     <Box sx={{ mt: 1 }}>
-      <Button size="small" variant="outlined" onClick={fetchNarrative} disabled={loading}>
-        {loading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
+      <Button
+        size="small"
+        variant="outlined"
+        onClick={fetchNarrative}
+        disabled={loading}
+        startIcon={loading ? <CircularProgress size={14} sx={{ color: "#2563EB" }} /> : <AutoAwesomeIcon fontSize="small" />}
+        sx={{
+          fontSize: 12.5,
+          fontWeight: 600,
+          color: "#2563EB",
+          borderColor: "#BFDBFE",
+          bgcolor: "#FFFFFF",
+          "&:hover": { bgcolor: "#EFF6FF", borderColor: "#93C5FD" },
+        }}
+      >
         Explain this
       </Button>
       {error && (
-        <Alert severity="warning" sx={{ mt: 1 }}>
+        <Alert severity="warning" sx={{ mt: 1, borderRadius: "8px" }}>
           {error}
         </Alert>
       )}

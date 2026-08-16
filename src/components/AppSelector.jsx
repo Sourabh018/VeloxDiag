@@ -8,19 +8,11 @@ function AppSelector() {
   const [apps, setApps] = useState([]);
 
   useEffect(() => {
-    // /api/applications (per-user owned apps, from ApplicationController) —
-    // NOT the old /api/dashboard/applications, which only listed names seen
-    // in telemetry already and stayed empty/stuck-loading for any app that
-    // hadn't sent data yet. AppGate guarantees at least one app exists by
-    // the time this mounts, so an empty result here would mean the two
-    // endpoints disagree, not a real "no apps" state.
     apiClient
       .get("/api/applications")
       .then((res) => {
         const list = Array.isArray(res.data) ? res.data.map((a) => a.name) : [];
         setApps(list);
-        // No more "All Apps" — default to the first real app once loaded,
-        // unless selectedApp already points at a valid one (e.g. page refresh).
         if (list.length > 0 && (!selectedApp || selectedApp === "all" || !list.includes(selectedApp))) {
           setSelectedApp(list[0]);
         }
@@ -30,27 +22,30 @@ function AppSelector() {
   }, []);
 
   return (
-    <FormControl size="small" sx={{ minWidth: 160 }}>
+    <FormControl size="small" sx={{ minWidth: 170 }}>
       <Select
         value={apps.includes(selectedApp) ? selectedApp : ""}
         onChange={(e) => setSelectedApp(e.target.value)}
         displayEmpty
         sx={{
-          backgroundColor: "#111113",
-          color: "#EDEDEF",
-          fontSize: 14,
+          backgroundColor: "#FFFFFF",
+          color: "#0F172A",
+          fontSize: 13.5,
+          fontWeight: 600,
           borderRadius: "8px",
-          "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.1)" },
-          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.2)" },
+          height: 36,
+          "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E2E8F0" },
+          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#CBD5E1" },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#2563EB" },
         }}
       >
         {apps.length === 0 && (
           <MenuItem value="" disabled>
-            Loading…
+            Loading apps...
           </MenuItem>
         )}
         {apps.map((name) => (
-          <MenuItem key={name} value={name}>
+          <MenuItem key={name} value={name} sx={{ fontSize: 13.5, fontWeight: 500, color: "#0F172A" }}>
             {name}
           </MenuItem>
         ))}

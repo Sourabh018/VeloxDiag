@@ -18,27 +18,49 @@ import BusinessContext from "./pages/BusinessContext";
 import Settings from "./pages/Settings";
 import { AppProvider } from "./contexts/AppContext";
 
-// Sidebar order: Dashboard, Diagnosis, Recommendations, Fixes, Telemetry, Slow
-// Queries, Query Analyzer, Index Advisor, Rules, Ask VeloxDiag, Business
-// Context, Settings — must match Sidebar.jsx's menu array order exactly,
-// since activeIndex is a plain array index into both.
-const pages = [Dashboard, Diagnosis, Recommendations, Fixes, Telemetry, SlowQueries, QueryAnalyzer, IndexAdvisor, Rules, ChatPage, BusinessContext, Settings];
+const pages = [
+  Dashboard,
+  Diagnosis,
+  Recommendations,
+  Fixes,
+  Telemetry,
+  SlowQueries,
+  QueryAnalyzer,
+  IndexAdvisor,
+  Rules,
+  ChatPage,
+  BusinessContext,
+  Settings,
+];
 
 function App() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const ActivePage = pages[activeIndex] ?? Dashboard;
+
+  const handleMobileMenuToggle = () => {
+    setMobileOpen((prev) => !prev);
+  };
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <LoginGate>
-        <AppGate>
+      {/* <LoginGate>
+        <AppGate> */}
           <AppProvider>
-            <Sidebar activeIndex={activeIndex} onSelect={setActiveIndex} />
-            <ActivePage />
+            <Sidebar
+              activeIndex={activeIndex}
+              onSelect={(index) => {
+                setActiveIndex(index);
+                setMobileOpen(false);
+              }}
+              mobileOpen={mobileOpen}
+              onMobileClose={() => setMobileOpen(false)}
+            />
+            <ActivePage onMobileMenuToggle={handleMobileMenuToggle} />
           </AppProvider>
-        </AppGate>
-      </LoginGate>
+        {/* </AppGate>
+      </LoginGate> */}
     </ThemeProvider>
   );
 }

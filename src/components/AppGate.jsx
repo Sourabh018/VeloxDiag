@@ -1,27 +1,19 @@
 import { useEffect, useState } from "react";
-import { Box, Typography, TextField, Button, Alert, IconButton, Tooltip } from "@mui/material";
+import { Box, Typography, TextField, Button, Alert, IconButton, Tooltip, Paper } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
+import BoltIcon from "@mui/icons-material/Bolt";
 import apiClient from "../api/client";
 
 const SERVER_URL = import.meta.env.VITE_API_URL;
 
-/**
- * Sits between LoginGate and the rest of the app. A logged-in user with zero
- * registered applications has nothing to look at yet — no app-selector value,
- * no telemetry, nothing. Old behavior was AppSelector spinning on "Loading…"
- * forever. This gate calls GET /api/applications first; if empty, it shows a
- * "register your app" form (POST /api/applications) and then the exact
- * pom.xml + application.yml snippet for veloxdiag-starter, using the key that
- * came back. Only once at least one app exists does it render children.
- */
 function AppGate({ children }) {
   const [loading, setLoading] = useState(true);
   const [apps, setApps] = useState([]);
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
-  const [justCreated, setJustCreated] = useState(null); // {name, ingestApiKey}
+  const [justCreated, setJustCreated] = useState(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -70,60 +62,55 @@ veloxdiag:
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#0C0C0E" }}>
-        <Typography sx={{ fontSize: 13.5, color: "#8C8C93" }}>Loading…</Typography>
+      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#F8FAFC" }}>
+        <Typography sx={{ fontSize: 14, color: "#64748B", fontWeight: 500 }}>Loading applications...</Typography>
       </Box>
     );
   }
 
-  // Step 2: app just created — show the starter snippet, then let them in.
-  // Checked before the apps.length>0 fallthrough since justCreated's app is
-  // already in `apps` at this point (added in handleRegister) — without this
-  // ordering the snippet screen would never render, it'd skip straight past.
   if (justCreated) {
     return (
-      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#0C0C0E", padding: 2 }}>
-        <Box sx={{ width: 560, textAlign: "left" }}>
-          <Typography sx={{ fontSize: 20, fontWeight: 600, color: "#EDEDEF", marginBottom: 0.5 }}>
-            "{justCreated.name}" registered
-          </Typography>
-          <Typography sx={{ fontSize: 13.5, color: "#8C8C93", marginBottom: 2.5 }}>
-            Add veloxdiag-starter to your app's pom.xml, then drop this into application.yml. Data shows up here as soon as your app takes its first request.
+      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#F8FAFC", padding: 3 }}>
+        <Paper elevation={0} sx={{ width: 560, p: 4, borderRadius: "16px", backgroundColor: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 10px 25px -5px rgba(15, 23, 42, 0.08)" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+            <Box sx={{ width: 32, height: 32, borderRadius: "8px", bgcolor: "#ECFDF5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <CheckIcon fontSize="small" />
+            </Box>
+            <Typography sx={{ fontSize: 20, fontWeight: 800, color: "#0F172A" }}>
+              "{justCreated.name}" Registered
+            </Typography>
+          </Box>
+          <Typography sx={{ fontSize: 13.5, color: "#64748B", marginBottom: 3 }}>
+            Add <code style={{ color: "#2563EB" }}>veloxdiag-starter</code> to your project's pom.xml, then configure your application.yml:
           </Typography>
 
-          <Box sx={{ position: "relative", backgroundColor: "#111113", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: 2 }}>
-            <Tooltip title={copied ? "Copied" : "Copy"}>
-              <IconButton size="small" onClick={handleCopy} sx={{ position: "absolute", top: 8, right: 8, color: "#8C8C93" }}>
-                {copied ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
+          <Box sx={{ position: "relative", backgroundColor: "#0F172A", borderRadius: "10px", padding: 2.5, mb: 2 }}>
+            <Tooltip title={copied ? "Copied!" : "Copy Snippet"}>
+              <IconButton size="small" onClick={handleCopy} sx={{ position: "absolute", top: 10, right: 10, color: "#94A3B8", "&:hover": { color: "#FFFFFF", bgcolor: "rgba(255,255,255,0.1)" } }}>
+                {copied ? <CheckIcon fontSize="small" sx={{ color: "#4ADE80" }} /> : <ContentCopyIcon fontSize="small" />}
               </IconButton>
             </Tooltip>
             <Typography
               component="pre"
-              sx={{ fontFamily: "ui-monospace, monospace", fontSize: 12.5, color: "#EDEDEF", whiteSpace: "pre-wrap", margin: 0 }}
+              sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 12.5, color: "#F8FAFC", whiteSpace: "pre-wrap", margin: 0 }}
             >
               {snippet}
             </Typography>
           </Box>
 
-          <Typography sx={{ fontSize: 12, color: "#57575F", marginTop: 1.5, marginBottom: 2.5 }}>
-            Your API key is shown once here. It's also on the Settings page if you need it again.
+          <Typography sx={{ fontSize: 12, color: "#94A3B8", marginBottom: 3 }}>
+            Your API key is displayed above and is also stored under Settings.
           </Typography>
 
           <Button
             fullWidth
+            variant="contained"
             onClick={() => setJustCreated(null)}
-            sx={{
-              textTransform: "none",
-              color: "#EDEDEF",
-              backgroundColor: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              padding: "8px 0",
-              "&:hover": { backgroundColor: "rgba(255,255,255,0.09)" },
-            }}
+            sx={{ py: 1.2, fontSize: 14, fontWeight: 700, bgcolor: "#2563EB", "&:hover": { bgcolor: "#1D4ED8" } }}
           >
-            Continue to dashboard
+            Continue to Dashboard
           </Button>
-        </Box>
+        </Paper>
       </Box>
     );
   }
@@ -132,55 +119,59 @@ veloxdiag:
     return children;
   }
 
-  // Step 1: no apps yet — register one.
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#0C0C0E" }}>
-      <Box sx={{ width: 360, textAlign: "center" }}>
-        <Typography sx={{ fontSize: 20, fontWeight: 600, color: "#EDEDEF", marginBottom: 0.5 }}>
-          Register your app
-        </Typography>
-        <Typography sx={{ fontSize: 13.5, color: "#8C8C93", marginBottom: 2.5 }}>
-          Give it a name — you'll get an API key and a starter snippet to drop into your project.
+    <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#F8FAFC", padding: 2 }}>
+      <Paper elevation={0} sx={{ width: 400, p: 4, borderRadius: "16px", backgroundColor: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 10px 25px -5px rgba(15, 23, 42, 0.08)", textAlign: "center" }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 1 }}>
+          <Box sx={{ width: 38, height: 38, borderRadius: "10px", bgcolor: "#EFF6FF", color: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <BoltIcon fontSize="medium" />
+          </Box>
+          <Typography sx={{ fontSize: 22, fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em" }}>
+            Register Application
+          </Typography>
+        </Box>
+        <Typography sx={{ fontSize: 13.5, color: "#64748B", marginBottom: 3 }}>
+          Enter a name for your application to generate an API ingest key and configuration snippet.
         </Typography>
 
         {error && (
-          <Alert severity="error" sx={{ marginBottom: 2, fontSize: 13, textAlign: "left" }}>
+          <Alert severity="error" sx={{ marginBottom: 2.5, fontSize: 13, textAlign: "left", borderRadius: "8px" }}>
             {error}
           </Alert>
         )}
 
         <TextField
-          placeholder="App name, e.g. AgroMart"
+          label="Application name"
+          placeholder="e.g. AgroMart or ECommerceApp"
           fullWidth
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleRegister()}
           sx={{
-            marginBottom: 2.5,
+            marginBottom: 3,
             "& .MuiOutlinedInput-root": {
-              backgroundColor: "#111113",
-              "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+              backgroundColor: "#FFFFFF",
+              borderRadius: "8px",
+              fontSize: 14,
+              "& fieldset": { borderColor: "#E2E8F0" },
+              "&:hover fieldset": { borderColor: "#CBD5E1" },
+              "&.Mui-focused fieldset": { borderColor: "#2563EB" },
             },
-            "& .MuiInputBase-input": { color: "#EDEDEF", fontSize: 14 },
+            "& .MuiInputLabel-root": { color: "#64748B", fontSize: 14 },
+            "& .MuiInputBase-input": { color: "#0F172A" },
           }}
         />
 
         <Button
           fullWidth
+          variant="contained"
           onClick={handleRegister}
           disabled={creating}
-          sx={{
-            textTransform: "none",
-            color: "#EDEDEF",
-            backgroundColor: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            padding: "8px 0",
-            "&:hover": { backgroundColor: "rgba(255,255,255,0.09)" },
-          }}
+          sx={{ py: 1.2, fontSize: 14, fontWeight: 700, bgcolor: "#2563EB", "&:hover": { bgcolor: "#1D4ED8" } }}
         >
-          {creating ? "..." : "Register app"}
+          {creating ? "Registering..." : "Register App"}
         </Button>
-      </Box>
+      </Paper>
     </Box>
   );
 }

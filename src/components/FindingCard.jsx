@@ -2,13 +2,10 @@ import { useState, useEffect } from "react";
 import { Box, Typography, Chip, Paper, Button, CircularProgress } from "@mui/material";
 import apiClient from "../api/client";
 
-// Dot color per severity — paired with the ramp's own text tone for the
-// outlined tag next to it, so the tag text stays legible against the dark
-// card surface instead of relying on a filled, saturated background.
 const severityStyle = {
-  HIGH: { dot: "#E5484D", text: "#F5A3A3", bg: "rgba(229,72,77,0.12)" },
-  MEDIUM: { dot: "#D9A24B", text: "#F0C989", bg: "rgba(217,162,75,0.12)" },
-  LOW: { dot: "#5B7CFF", text: "#C3CCFF", bg: "rgba(91,124,255,0.12)" },
+  HIGH: { dot: "#DC2626", text: "#991B1B", bg: "#FEF2F2", border: "#FCA5A5" },
+  MEDIUM: { dot: "#D97706", text: "#92400E", bg: "#FFFBEB", border: "#FCD34D" },
+  LOW: { dot: "#2563EB", text: "#1E40AF", bg: "#EFF6FF", border: "#BFDBFE" },
 };
 
 const ruleTypeLabel = {
@@ -43,28 +40,24 @@ function formatEvidenceValue(value) {
   return String(value);
 }
 
-// Keys rendered separately (not in the generic evidence line below) because
-// they get their own dedicated display treatment:
-// - conditionMatched: shown as its own "why this fired" line, not buried
-//   mid-list among counts and ratios.
-// - insufficientSampleSize: already implied by the message text itself when
-//   true; redundant as a raw evidence key.
 const EVIDENCE_KEYS_SHOWN_SEPARATELY = ["conditionMatched", "insufficientSampleSize"];
 
 function SeverityTag({ severity }) {
   const style = severityStyle[severity] ?? severityStyle.LOW;
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-      <Box sx={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: style.dot }} />
+      <Box sx={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: style.dot }} />
       <Typography
         sx={{
-          fontFamily: "ui-monospace, monospace",
-          fontSize: 11.5,
+          fontFamily: '"JetBrains Mono", monospace',
+          fontSize: 11,
+          fontWeight: 700,
           letterSpacing: "0.03em",
           color: style.text,
           backgroundColor: style.bg,
+          border: `1px solid ${style.border}`,
           padding: "2px 8px",
-          borderRadius: 10,
+          borderRadius: "6px",
         }}
       >
         {severity}
@@ -73,31 +66,27 @@ function SeverityTag({ severity }) {
   );
 }
 
-// Confidence badge — separate from SeverityTag on purpose. Severity answers
-// "how bad is this," confidence answers "how sure are we this reading is
-// real, not noise." Only renders when the backend actually set a confidence
-// value — SLOW_REQUEST and POSSIBLE_N_PLUS_ONE now carry one (consistency-
-// based), correlation findings always have one, other rule types have none
-// and the badge is simply omitted for them.
 const confidenceStyle = {
-  HIGH: "#8FD9A8",
-  MEDIUM: "#F0C989",
-  LOW: "#8A93A3",
+  HIGH: { color: "#047857", bg: "#ECFDF5", border: "#A7F3D0" },
+  MEDIUM: { color: "#B45309", bg: "#FFFBEB", border: "#FDE68A" },
+  LOW: { color: "#475569", bg: "#F8FAFC", border: "#CBD5E1" },
 };
 
 function ConfidenceTag({ confidence }) {
   if (!confidence) return null;
-  const color = confidenceStyle[confidence] ?? confidenceStyle.LOW;
+  const style = confidenceStyle[confidence] ?? confidenceStyle.LOW;
   return (
     <Typography
       sx={{
-        fontFamily: "ui-monospace, monospace",
+        fontFamily: '"JetBrains Mono", monospace',
         fontSize: 10.5,
+        fontWeight: 700,
         letterSpacing: "0.04em",
-        color,
-        border: `1px solid ${color}33`,
+        color: style.color,
+        backgroundColor: style.bg,
+        border: `1px solid ${style.border}`,
         padding: "2px 7px",
-        borderRadius: 10,
+        borderRadius: "6px",
         whiteSpace: "nowrap",
       }}
     >
@@ -130,9 +119,6 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [suggestionError, setSuggestionError] = useState(null);
 
-  // "Mark as Fixed" — see FixTrackingService on the backend. Not offered for
-  // correlation/custom-rule cards, since those don't represent one concrete
-  // addressable issue the same way a single rule finding does.
   const [fixExpanded, setFixExpanded] = useState(false);
   const [fixNote, setFixNote] = useState("");
   const [fixSaving, setFixSaving] = useState(false);
@@ -241,15 +227,21 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
 
   return (
     <Paper
-      variant="outlined"
+      elevation={0}
       sx={{
-        padding: "16px 18px",
-        marginBottom: 1.25,
+        padding: "18px 20px",
+        marginBottom: 1.5,
         borderColor: reopenedInfo
-          ? "rgba(229,72,77,0.3)"
-          : isCorrelation ? "rgba(91,124,255,0.18)" : "rgba(255,255,255,0.07)",
-        borderRadius: "10px",
-        backgroundColor: "#111113",
+          ? "#FCA5A5"
+          : isCorrelation ? "#BFDBFE" : "#E2E8F0",
+        borderRadius: "12px",
+        backgroundColor: isCorrelation ? "#F8FAFC" : "#FFFFFF",
+        boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
+        transition: "all 0.15s ease",
+        "&:hover": {
+          boxShadow: "0 4px 12px rgba(15, 23, 42, 0.06)",
+          borderColor: isCorrelation ? "#93C5FD" : "#CBD5E1",
+        },
       }}
     >
       {reopenedInfo && (
@@ -258,32 +250,32 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
             display: "flex",
             alignItems: "center",
             gap: 1,
-            backgroundColor: "rgba(229,72,77,0.1)",
-            border: "1px solid rgba(229,72,77,0.25)",
-            borderRadius: "6px",
-            padding: "6px 10px",
+            backgroundColor: "#FEF2F2",
+            border: "1px solid #FCA5A5",
+            borderRadius: "8px",
+            padding: "8px 12px",
             marginBottom: 1.5,
           }}
         >
-          <Typography sx={{ fontSize: 12.5, color: "#F5A3A3" }}>
-            ⚠ This was marked fixed on {new Date(reopenedInfo.markedFixedAt).toLocaleDateString()}
-            {reopenedInfo.note ? ` ("${reopenedInfo.note}")` : ""} — it's back. See the Fixes page for details.
+          <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#991B1B" }}>
+            ⚠ Marked fixed on {new Date(reopenedInfo.markedFixedAt).toLocaleDateString()}
+            {reopenedInfo.note ? ` ("${reopenedInfo.note}")` : ""} — issue reopened.
           </Typography>
         </Box>
       )}
 
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 1 }}>
-        <Typography sx={{ fontFamily: "ui-monospace, monospace", fontSize: 14, color: "#EDEDEF" }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 1, gap: 2 }}>
+        <Typography sx={{ fontFamily: '"JetBrains Mono", "IBM Plex Mono", monospace', fontSize: 14.5, fontWeight: 700, color: "#0F172A", wordBreak: "break-all" }}>
           {endpoint}
         </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
           <ConfidenceTag confidence={confidence} />
           <SeverityTag severity={severity} />
         </Box>
       </Box>
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, marginBottom: 1 }}>
-        <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, marginBottom: 1 }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#475569" }}>
           {getRuleTypeLabel(ruleType)}
         </Typography>
         {isCustomRule && (
@@ -291,28 +283,30 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
             label="Custom Rule"
             size="small"
             variant="outlined"
-            sx={{ height: 17, fontSize: "0.6rem", borderColor: "rgba(255,255,255,0.1)", color: "text.secondary" }}
+            sx={{ height: 20, fontSize: 11, fontWeight: 600, borderColor: "#CBD5E1", color: "#64748B" }}
           />
         )}
       </Box>
 
       {!compact && (
-        <Typography sx={{ fontSize: 13.5, color: "#9B9BA1", lineHeight: 1.55, marginBottom: 1 }}>
+        <Typography sx={{ fontSize: 13.5, color: "#334155", lineHeight: 1.6, marginBottom: 1.25 }}>
           {message}
         </Typography>
       )}
 
       {isCorrelation && relatedFindings?.length > 0 && (
-        <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", marginBottom: 1 }}>
+        <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", marginBottom: 1.25 }}>
           {relatedFindings.map((related) => (
             <Typography
               key={related}
               sx={{
                 fontSize: 12,
-                color: "text.secondary",
-                border: "1px solid rgba(255,255,255,0.08)",
+                fontWeight: 600,
+                color: "#1E40AF",
+                bgcolor: "#EFF6FF",
+                border: "1px solid #BFDBFE",
                 padding: "2px 8px",
-                borderRadius: 10,
+                borderRadius: "6px",
               }}
             >
               {getRuleTypeLabel(related)}
@@ -321,32 +315,28 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
         </Box>
       )}
 
-      {/* "Why this fired" — the literal rule condition that matched, verbatim
-          from the backend (evidence.conditionMatched). Given its own line so
-          it reads as a receipt/log line, not buried in the generic evidence
-          dump. Only renders for rule types that currently populate it. */}
       {conditionMatched && !compact && (
         <Typography
           sx={{
-            fontFamily: "ui-monospace, monospace",
-            fontSize: 11.5,
-            color: "#6B7280",
-            marginBottom: 1,
-            paddingLeft: 1,
-            borderLeft: "2px solid rgba(255,255,255,0.08)",
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: 12,
+            color: "#475569",
+            marginBottom: 1.25,
+            paddingLeft: 1.25,
+            borderLeft: "3px solid #CBD5E1",
           }}
         >
-          {conditionMatched}
+          Rule matched: {conditionMatched}
         </Typography>
       )}
 
       {evidence && !compact && (
         <Typography
           sx={{
-            fontFamily: "ui-monospace, monospace",
+            fontFamily: '"JetBrains Mono", monospace',
             fontSize: 11.5,
-            letterSpacing: "0.01em",
-            color: "text.disabled",
+            color: "#64748B",
+            fontVariantNumeric: "tabular-nums",
           }}
         >
           {Object.entries(evidence)
@@ -364,10 +354,10 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
               variant="text"
               onClick={handleToggleSuggestion}
               disabled={suggestionLoading}
-              sx={{ fontSize: 12.5, textTransform: "none", color: "#8FD9A8", padding: 0, minWidth: 0 }}
+              sx={{ fontSize: 12.5, textTransform: "none", fontWeight: 600, color: "#059669", padding: 0, minWidth: 0 }}
             >
-              {suggestionLoading ? <CircularProgress size={14} sx={{ mr: 1, color: "#8FD9A8" }} /> : null}
-              {suggestionExpanded ? "Hide suggestion" : "Suggestion"}
+              {suggestionLoading ? <CircularProgress size={14} sx={{ mr: 1, color: "#059669" }} /> : null}
+              {suggestionExpanded ? "Hide suggested fix" : "Show suggested fix"}
             </Button>
           )}
 
@@ -375,9 +365,9 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
             <Box sx={{ marginTop: autoFetchSuggestion ? 0 : 1 }}>
               {suggestionLoading && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <CircularProgress size={14} sx={{ color: "#8FD9A8" }} />
-                  <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                    Generating suggestion…
+                  <CircularProgress size={14} sx={{ color: "#059669" }} />
+                  <Typography sx={{ fontSize: 12.5, color: "#475569" }}>
+                    Generating code fix...
                   </Typography>
                 </Box>
               )}
@@ -391,24 +381,24 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
               {suggestion && (
                 <Box
                   sx={{
-                    padding: "8px 10px",
-                    borderRadius: "6px",
-                    backgroundColor: "rgba(143,217,168,0.06)",
-                    border: "1px solid rgba(143,217,168,0.15)",
+                    padding: 2,
+                    borderRadius: "8px",
+                    backgroundColor: "#0F172A",
+                    border: "1px solid #1E293B",
                   }}
                 >
-                  <Typography sx={{ fontSize: 11, color: "#8FD9A8", letterSpacing: "0.03em", marginBottom: 0.5 }}>
-                    SUGGESTED FIX
+                  <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#4ADE80", letterSpacing: "0.05em", marginBottom: 1 }}>
+                    SUGGESTED CODE OPTIMIZATION
                   </Typography>
                   <Typography
                     component="pre"
                     sx={{
-                      fontFamily: "ui-monospace, monospace",
-                      fontSize: 13.5,
+                      fontFamily: '"JetBrains Mono", "IBM Plex Mono", monospace',
+                      fontSize: 13,
                       lineHeight: 1.6,
                       whiteSpace: "pre-wrap",
                       wordBreak: "break-word",
-                      color: "#C8E6CD",
+                      color: "#F8FAFC",
                       margin: 0,
                     }}
                   >
@@ -427,7 +417,7 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
             size="small"
             variant="text"
             onClick={handleToggleplans}
-            sx={{ fontSize: 12.5, textTransform: "none", color: "primary.main", padding: 0, minWidth: 0 }}
+            sx={{ fontSize: 12.5, textTransform: "none", fontWeight: 600, color: "#2563EB", padding: 0, minWidth: 0 }}
           >
             {plansExpanded ? "Hide query plan" : "Show query plan"}
           </Button>
@@ -444,35 +434,37 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
 
               {plans?.length === 0 && (
                 <Typography variant="caption" color="text.secondary">
-                  No captured plans found for this endpoint.
+                  No captured query plans found for this endpoint.
                 </Typography>
               )}
 
               {plans?.map((plan) => (
                 <Paper
                   key={plan.id}
-                  variant="outlined"
+                  elevation={0}
                   sx={{
                     padding: 1.5,
                     marginBottom: 1,
-                    borderColor: "rgba(255,255,255,0.06)",
+                    borderColor: "#E2E8F0",
                     borderRadius: "8px",
-                    backgroundColor: "#0C0C0E",
+                    backgroundColor: "#F8FAFC",
                   }}
                 >
                   <Box sx={{ display: "flex", justifyContent: "space-between", marginBottom: 0.5 }}>
-                    <Typography sx={{ fontSize: 12, color: "text.disabled" }}>
+                    <Typography sx={{ fontSize: 12, color: "#64748B" }}>
                       {new Date(plan.timestamp).toLocaleString()} · {plan.requestDurationMs}ms
                     </Typography>
                     <Typography
                       sx={{
-                        fontFamily: "ui-monospace, monospace",
+                        fontFamily: '"JetBrains Mono", monospace',
                         fontSize: 11,
+                        fontWeight: 700,
                         letterSpacing: "0.02em",
-                        color: plan.containsSeqScan ? "#F0C989" : "#8FD9A8",
-                        backgroundColor: plan.containsSeqScan ? "rgba(217,162,75,0.12)" : "rgba(143,217,168,0.12)",
+                        color: plan.containsSeqScan ? "#92400E" : "#065F46",
+                        backgroundColor: plan.containsSeqScan ? "#FFFBEB" : "#ECFDF5",
+                        border: `1px solid ${plan.containsSeqScan ? "#FCD34D" : "#6EE7B7"}`,
                         padding: "2px 8px",
-                        borderRadius: 10,
+                        borderRadius: "6px",
                       }}
                     >
                       {plan.containsSeqScan ? "Seq Scan" : "Index Used"}
@@ -481,11 +473,11 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
                   <Typography
                     component="pre"
                     sx={{
-                      fontFamily: "ui-monospace, monospace",
+                      fontFamily: '"JetBrains Mono", monospace',
                       fontSize: 12,
                       whiteSpace: "pre-wrap",
                       wordBreak: "break-word",
-                      color: "#B0B0B6",
+                      color: "#334155",
                       margin: 0,
                     }}
                   >
@@ -501,8 +493,8 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
       {canMarkFixed && !compact && (
         <Box sx={{ marginTop: 1.5 }}>
           {fixSaved ? (
-            <Typography sx={{ fontSize: 12.5, color: "#8FD9A8" }}>
-              ✓ Marked as fixed — track it on the Fixes page
+            <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: "#059669" }}>
+              ✓ Marked as fixed — track impact on the Fixes page
             </Typography>
           ) : (
             <>
@@ -510,25 +502,26 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
                 size="small"
                 variant="text"
                 onClick={() => setFixExpanded((v) => !v)}
-                sx={{ fontSize: 12.5, textTransform: "none", color: "#8FD9A8", padding: 0, minWidth: 0 }}
+                sx={{ fontSize: 12.5, textTransform: "none", fontWeight: 600, color: "#059669", padding: 0, minWidth: 0 }}
               >
                 {fixExpanded ? "Cancel" : "Mark as Fixed"}
               </Button>
 
               {fixExpanded && (
-                <Box sx={{ marginTop: 1, display: "flex", gap: 1, alignItems: "flex-start" }}>
+                <Box sx={{ marginTop: 1, display: "flex", gap: 1, alignItems: "flex-start", flexWrap: "wrap" }}>
                   <input
                     type="text"
-                    placeholder="Optional note, e.g. added JOIN FETCH"
+                    placeholder="Optional note, e.g. added index on student_id"
                     value={fixNote}
                     onChange={(e) => setFixNote(e.target.value)}
                     style={{
                       flex: 1,
-                      background: "#0C0C0E",
-                      border: "1px solid rgba(255,255,255,0.1)",
+                      minWidth: 200,
+                      background: "#FFFFFF",
+                      border: "1px solid #CBD5E1",
                       borderRadius: 6,
-                      padding: "6px 10px",
-                      color: "#EDEDEF",
+                      padding: "6px 12px",
+                      color: "#0F172A",
                       fontSize: 13,
                       outline: "none",
                     }}
@@ -540,19 +533,19 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
                     sx={{
                       textTransform: "none",
                       fontSize: 12.5,
-                      color: "#EDEDEF",
-                      backgroundColor: "rgba(143,217,168,0.1)",
-                      border: "1px solid rgba(143,217,168,0.25)",
-                      padding: "6px 14px",
-                      "&:hover": { backgroundColor: "rgba(143,217,168,0.18)" },
+                      fontWeight: 700,
+                      color: "#FFFFFF",
+                      backgroundColor: "#059669",
+                      padding: "6px 16px",
+                      "&:hover": { backgroundColor: "#047857" },
                     }}
                   >
-                    {fixSaving ? "Saving..." : "Confirm"}
+                    {fixSaving ? "Saving..." : "Confirm Fix"}
                   </Button>
                 </Box>
               )}
               {fixError && (
-                <Typography sx={{ fontSize: 12, color: "#F5A3A3", marginTop: 0.5 }}>{fixError}</Typography>
+                <Typography sx={{ fontSize: 12, color: "#DC2626", marginTop: 0.5 }}>{fixError}</Typography>
               )}
             </>
           )}
@@ -565,14 +558,14 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
             size="small"
             variant="text"
             onClick={handleToggleNarrative}
-            sx={{ fontSize: 12.5, textTransform: "none", color: "primary.main", padding: 0, minWidth: 0 }}
+            sx={{ fontSize: 12.5, textTransform: "none", fontWeight: 600, color: "#2563EB", padding: 0, minWidth: 0 }}
           >
-            {narrativeExpanded ? "Hide explanation" : "Explain this"}
+            {narrativeExpanded ? "Hide AI explanation" : "Explain with AI"}
           </Button>
 
           {narrativeExpanded && (
             <Box sx={{ marginTop: 1 }}>
-              {narrativeLoading && <CircularProgress size={16} />}
+              {narrativeLoading && <CircularProgress size={16} sx={{ color: "#2563EB" }} />}
 
               {narrativeError && (
                 <Typography variant="caption" color="error">
@@ -582,15 +575,15 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
 
               {narrative && (
                 <Paper
-                  variant="outlined"
+                  elevation={0}
                   sx={{
-                    padding: 1.5,
-                    borderColor: "rgba(91,124,255,0.15)",
+                    padding: 2,
+                    borderColor: "#BFDBFE",
                     borderRadius: "8px",
-                    backgroundColor: "rgba(91,124,255,0.05)",
+                    backgroundColor: "#EFF6FF",
                   }}
                 >
-                  <Typography sx={{ fontSize: 13, color: "#C3CCFF", lineHeight: 1.55 }}>
+                  <Typography sx={{ fontSize: 13.5, color: "#1E40AF", lineHeight: 1.6 }}>
                     {narrative}
                   </Typography>
                 </Paper>
