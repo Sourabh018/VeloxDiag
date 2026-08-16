@@ -61,18 +61,18 @@ export default function useSettings(applicationName) {
     }
   }, [applicationName]);
 
-  // Reset feature is unchanged — it already took an explicit applicationName
-  // per call (independent of whichever app is selected for threshold editing),
-  // so it needs no changes for the per-app settings scoping.
-  const resetApplication = useCallback(async (targetApplicationName, token) => {
+  // Self-service reset — hits the owner-scoped endpoint on ApplicationController
+  // (login + ownership check, same as delete) instead of the admin-token-gated
+  // one. Any user can reset their own app's data now; no admin token param
+  // needed for the normal case anymore.
+  const resetApplication = useCallback(async (targetApplicationName) => {
     setResetting(true);
     setResetError(null);
     setResetSuccess(null);
     try {
-      const res = await apiClient.delete("/api/admin/reset-application", {
-        params: { applicationName: targetApplicationName },
-        headers: { "X-Admin-Token": token },
-      });
+      const res = await apiClient.delete(
+        `/api/applications/${encodeURIComponent(targetApplicationName)}/data`
+      );
       setResetSuccess(res.data);
       return { ok: true, data: res.data };
     } catch (err) {

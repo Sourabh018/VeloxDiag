@@ -93,11 +93,12 @@ function Settings({ onMobileMenuToggle }) {
     setDeleteError(null);
     try {
       await apiClient.delete(`/api/applications/${encodeURIComponent(deleteTarget)}`);
-      // Full reload instead of just updating local state — forces AppGate to
-      // re-fetch /api/applications fresh, so if this was the last (or
-      // currently selected) app it correctly falls back to the
-      // Register/choose-app screen instead of leaving the user stuck on a
-      // stale dashboard for an app that no longer exists.
+      // Clear the session too, not just reload — otherwise the still-valid
+      // token skips LoginGate entirely and drops the user straight into
+      // AppGate's Register screen, which is confusing right after a delete.
+      // Full sign-out + reload lands cleanly back on the Login page instead.
+      localStorage.removeItem("veloxdiag_session_token");
+      localStorage.removeItem("veloxdiag_session_email");
       window.location.reload();
     } catch (err) {
       setDeleteError(err.response?.data || "Delete failed.");
@@ -125,23 +126,20 @@ function Settings({ onMobileMenuToggle }) {
 
   const [resetTarget, setResetTarget] = useState(null);
   const [confirmText, setConfirmText] = useState("");
-  const [tokenInput, setTokenInput] = useState("");
 
   const openResetDialog = (appName) => {
     setResetTarget(appName);
     setConfirmText("");
-    setTokenInput("");
   };
 
   const closeResetDialog = () => {
     setResetTarget(null);
     setConfirmText("");
-    setTokenInput("");
   };
 
   const handleConfirmReset = async () => {
     if (confirmText !== resetTarget) return;
-    const result = await resetApplication(resetTarget, tokenInput);
+    const result = await resetApplication(resetTarget);
     if (result.ok) {
       closeResetDialog();
     }
@@ -477,7 +475,7 @@ function Settings({ onMobileMenuToggle }) {
           </Box>
           <Typography sx={{ fontSize: 13, color: "#64748B", mb: 2.5 }}>
             Permanently deletes all telemetry and slow-query-plan records for the selected application only — other
-            applications are never affected. This cannot be undone. Requires the admin reset token configured on the server.
+            applications are never affected. This cannot be undone. You must own the application to reset it.
           </Typography>
 
           {apps.length === 0 ? (
@@ -589,8 +587,9 @@ function Settings({ onMobileMenuToggle }) {
           <DialogContent>
             <DialogContentText sx={{ color: "#64748B", fontSize: 14, mb: 2 }}>
               This permanently deletes all telemetry and slow-query-plan records for{" "}
-              <strong style={{ color: "#0F172A" }}>{resetTarget}</strong> only. Type the application
-              name below to confirm, then enter the admin reset token.
+              <strong style={{ color: "#0F172A" }}>{resetTarget}</strong> only. The app's
+              registration and API key are kept — just its collected data is cleared. Type the
+              application name below to confirm.
             </DialogContentText>
             <TextField
               autoFocus
@@ -598,19 +597,11 @@ function Settings({ onMobileMenuToggle }) {
               label={`Type "${resetTarget}" to confirm`}
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
-              sx={{ mb: 2, ...dialogFieldSx }}
-            />
-            <TextField
-              fullWidth
-              type="password"
-              label="Admin reset token"
-              value={tokenInput}
-              onChange={(e) => setTokenInput(e.target.value)}
               sx={dialogFieldSx}
             />
             {resetError && (
               <Alert severity="error" sx={{ mt: 2, borderRadius: "8px" }}>
-                Reset failed — check the token is correct and try again.
+                Reset failed — try again.
               </Alert>
             )}
           </DialogContent>
@@ -620,7 +611,7 @@ function Settings({ onMobileMenuToggle }) {
             </Button>
             <Button
               onClick={handleConfirmReset}
-              disabled={confirmText !== resetTarget || !tokenInput || resetting}
+              disabled={confirmText !== resetTarget || resetting}
               sx={{
                 color: "#DC2626",
                 bgcolor: "#FEF2F2",
