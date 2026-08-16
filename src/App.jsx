@@ -45,8 +45,8 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      {/* <LoginGate>
-        <AppGate> */}
+      <LoginGate>
+        <AppGate>
           <AppProvider>
             <Sidebar
               activeIndex={activeIndex}
@@ -59,8 +59,8 @@ function App() {
             />
             <ActivePage onMobileMenuToggle={handleMobileMenuToggle} />
           </AppProvider>
-        {/* </AppGate>
-      </LoginGate> */}
+        </AppGate>
+      </LoginGate>
     </ThemeProvider>
   );
 }
