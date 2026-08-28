@@ -18,7 +18,6 @@ import TroubleshootIcon from "@mui/icons-material/Troubleshoot";
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import ChatIcon from "@mui/icons-material/Chat";
 import BuildCircleIcon from "@mui/icons-material/BuildCircle";
-import DescriptionIcon from "@mui/icons-material/Description";
 import GavelIcon from "@mui/icons-material/Gavel";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
@@ -47,8 +46,7 @@ const menuGroups = [
     title: "AI & CONFIGURATION",
     items: [
       { index: 9, label: "Ask VeloxDiag", icon: <ChatIcon sx={{ fontSize: 17 }} /> },
-      { index: 10, label: "Business Context", icon: <DescriptionIcon sx={{ fontSize: 17 }} /> },
-      { index: 11, label: "Settings", icon: <SettingsIcon sx={{ fontSize: 17 }} /> },
+      { index: 10, label: "Settings", icon: <SettingsIcon sx={{ fontSize: 17 }} /> },
     ],
   },
 ];
