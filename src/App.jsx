@@ -15,7 +15,6 @@ import IndexAdvisor from "./pages/IndexAdvisor";
 import Rules from "./pages/Rules";
 import ChatPage from "./pages/ChatPage";
 import Fixes from "./pages/Fixes";
-import BusinessContext from "./pages/BusinessContext";
 import Settings from "./pages/Settings";
 import { AppProvider } from "./contexts/AppContext";
 
@@ -30,7 +29,6 @@ const pages = [
   IndexAdvisor,
   Rules,
   ChatPage,
-  BusinessContext,
   Settings,
 ];
 
