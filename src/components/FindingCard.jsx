@@ -97,8 +97,31 @@ function ConfidenceTag({ confidence }) {
 
 const NO_SUGGESTION_TYPES = ["HIGH_ERROR_RATE", "SERVER_ERROR", "ROOT_CAUSE_CORRELATION"];
 
+function AiEnhancedTag({ aiEnhanced }) {
+  const style = aiEnhanced
+    ? { color: "#047857", bg: "#ECFDF5", border: "#A7F3D0", label: "AI-grounded fix" }
+    : { color: "#64748B", bg: "#F1F5F9", border: "#CBD5E1", label: "Generic — no query captured" };
+  return (
+    <Typography
+      sx={{
+        fontSize: 10.5,
+        fontWeight: 700,
+        letterSpacing: "0.02em",
+        color: style.color,
+        backgroundColor: style.bg,
+        border: `1px solid ${style.border}`,
+        padding: "2px 8px",
+        borderRadius: "6px",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {style.label}
+    </Typography>
+  );
+}
+
 function FindingCard({ finding, applicationName, showExplain = true, showSuggestion = false, autoFetchSuggestion = false, fetchDelayMs = 0, compact = false }) {
-  const { ruleType, severity, endpoint, message, evidence, relatedFindings, confidence } = finding;
+  const { ruleType, severity, endpoint, message, evidence, relatedFindings, confidence, aiEnhanced } = finding;
   const isCorrelation = ruleType === "ROOT_CAUSE_CORRELATION";
   const isCustomRule = !(ruleType in ruleTypeLabel) && !isCorrelation;
   const isMissingIndex = ruleType === "MISSING_INDEX_CANDIDATE";
@@ -268,7 +291,8 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
         <Typography sx={{ fontFamily: '"JetBrains Mono", "IBM Plex Mono", monospace', fontSize: 14.5, fontWeight: 700, color: "#0F172A", wordBreak: "break-all" }}>
           {endpoint}
         </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          {canSuggest && aiEnhanced !== undefined && <AiEnhancedTag aiEnhanced={aiEnhanced} />}
           <ConfidenceTag confidence={confidence} />
           <SeverityTag severity={severity} />
         </Box>
@@ -387,9 +411,16 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
                     border: "1px solid #1E293B",
                   }}
                 >
-                  <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#4ADE80", letterSpacing: "0.05em", marginBottom: 1 }}>
-                    SUGGESTED CODE OPTIMIZATION
-                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1, marginBottom: 1 }}>
+                    <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#4ADE80", letterSpacing: "0.05em" }}>
+                      SUGGESTED CODE OPTIMIZATION
+                    </Typography>
+                    {aiEnhanced !== undefined && (
+                      <Typography sx={{ fontSize: 10.5, fontWeight: 600, color: aiEnhanced ? "#4ADE80" : "#94A3B8" }}>
+                        {aiEnhanced ? "Grounded in captured query + EXPLAIN plan" : "Generic template — no query captured yet"}
+                      </Typography>
+                    )}
+                  </Box>
                   <Typography
                     component="pre"
                     sx={{
