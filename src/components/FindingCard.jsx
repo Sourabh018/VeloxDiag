@@ -126,6 +126,7 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
   const isCustomRule = !(ruleType in ruleTypeLabel) && !isCorrelation;
   const isMissingIndex = ruleType === "MISSING_INDEX_CANDIDATE";
   const conditionMatched = evidence?.conditionMatched;
+  const canDismiss = !isCorrelation;
 
   const [plansExpanded, setPlansExpanded] = useState(false);
   const [plans, setPlans] = useState(null);
@@ -148,6 +149,50 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
   const [fixSaved, setFixSaved] = useState(false);
   const [fixError, setFixError] = useState(null);
   const canMarkFixed = !isCorrelation;
+
+  const [dismissedInfo, setDismissedInfo] = useState(finding.dismissedInfo ?? null);
+  const [dismissExpanded, setDismissExpanded] = useState(false);
+  const [dismissNote, setDismissNote] = useState("");
+  const [dismissSaving, setDismissSaving] = useState(false);
+  const [dismissError, setDismissError] = useState(null);
+  const [restoring, setRestoring] = useState(false);
+
+  useEffect(() => {
+    setDismissedInfo(finding.dismissedInfo ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finding.dismissedInfo]);
+
+  async function handleDismiss() {
+    if (!applicationName || !endpoint || !ruleType) return;
+    setDismissSaving(true);
+    setDismissError(null);
+    try {
+      const res = await apiClient.post("/api/dismissed-findings", null, {
+        params: { applicationName, endpoint, ruleType, note: dismissNote || undefined },
+      });
+      setDismissedInfo({ dismissedAt: res.data.dismissedAt, note: res.data.note });
+      setDismissExpanded(false);
+    } catch (err) {
+      setDismissError(err.message ?? "Failed to dismiss finding");
+    } finally {
+      setDismissSaving(false);
+    }
+  }
+
+  async function handleRestore() {
+    setRestoring(true);
+    setDismissError(null);
+    try {
+      await apiClient.delete("/api/dismissed-findings", {
+        params: { applicationName, endpoint, ruleType },
+      });
+      setDismissedInfo(null);
+    } catch (err) {
+      setDismissError(err.message ?? "Failed to restore finding");
+    } finally {
+      setRestoring(false);
+    }
+  }
 
   async function handleMarkFixed() {
     if (!applicationName || !endpoint || !ruleType) return;
@@ -256,17 +301,49 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
         marginBottom: 1.5,
         borderColor: reopenedInfo
           ? "#FCA5A5"
-          : isCorrelation ? "#BFDBFE" : "#E2E8F0",
+          : dismissedInfo ? "#E2E8F0" : isCorrelation ? "#BFDBFE" : "#E2E8F0",
         borderRadius: "12px",
         backgroundColor: isCorrelation ? "#F8FAFC" : "#FFFFFF",
         boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
         transition: "all 0.15s ease",
+        opacity: dismissedInfo ? 0.6 : 1,
         "&:hover": {
           boxShadow: "0 4px 12px rgba(15, 23, 42, 0.06)",
           borderColor: isCorrelation ? "#93C5FD" : "#CBD5E1",
         },
       }}
     >
+      {dismissedInfo && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 1,
+            backgroundColor: "#F1F5F9",
+            border: "1px solid #CBD5E1",
+            borderRadius: "8px",
+            padding: "8px 12px",
+            marginBottom: 1.5,
+          }}
+        >
+          <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#475569" }}>
+            Dismissed{dismissedInfo.dismissedAt ? ` on ${new Date(dismissedInfo.dismissedAt).toLocaleDateString()}` : ""}
+            {dismissedInfo.note ? ` ("${dismissedInfo.note}")` : ""}
+          </Typography>
+          <Button
+            size="small"
+            variant="text"
+            onClick={handleRestore}
+            disabled={restoring}
+            sx={{ fontSize: 12.5, textTransform: "none", fontWeight: 700, color: "#2563EB", padding: 0, minWidth: 0 }}
+          >
+            {restoring ? "Restoring..." : "Restore"}
+          </Button>
+        </Box>
+      )}
+
       {reopenedInfo && (
         <Box
           sx={{
@@ -579,6 +656,60 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
                 <Typography sx={{ fontSize: 12, color: "#DC2626", marginTop: 0.5 }}>{fixError}</Typography>
               )}
             </>
+          )}
+        </Box>
+      )}
+
+      {canDismiss && !compact && !dismissedInfo && (
+        <Box sx={{ marginTop: 1.5 }}>
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => setDismissExpanded((v) => !v)}
+            sx={{ fontSize: 12.5, textTransform: "none", fontWeight: 600, color: "#64748B", padding: 0, minWidth: 0 }}
+          >
+            {dismissExpanded ? "Cancel" : "Dismiss"}
+          </Button>
+
+          {dismissExpanded && (
+            <Box sx={{ marginTop: 1, display: "flex", gap: 1, alignItems: "flex-start", flexWrap: "wrap" }}>
+              <input
+                type="text"
+                placeholder="Optional note, e.g. intentional for this admin endpoint"
+                value={dismissNote}
+                onChange={(e) => setDismissNote(e.target.value)}
+                style={{
+                  flex: 1,
+                  minWidth: 200,
+                  background: "#FFFFFF",
+                  border: "1px solid #CBD5E1",
+                  borderRadius: 6,
+                  padding: "6px 12px",
+                  color: "#0F172A",
+                  fontSize: 13,
+                  outline: "none",
+                }}
+              />
+              <Button
+                size="small"
+                onClick={handleDismiss}
+                disabled={dismissSaving}
+                sx={{
+                  textTransform: "none",
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  color: "#FFFFFF",
+                  backgroundColor: "#64748B",
+                  padding: "6px 16px",
+                  "&:hover": { backgroundColor: "#475569" },
+                }}
+              >
+                {dismissSaving ? "Dismissing..." : "Confirm Dismiss"}
+              </Button>
+            </Box>
+          )}
+          {dismissError && (
+            <Typography sx={{ fontSize: 12, color: "#DC2626", marginTop: 0.5 }}>{dismissError}</Typography>
           )}
         </Box>
       )}

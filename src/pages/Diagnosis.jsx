@@ -2,17 +2,19 @@ import { Box, Typography, CircularProgress, Paper, Chip, Stack } from "@mui/mate
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import Header from "../components/Header";
 import FindingCard from "../components/FindingCard";
+import DismissedFindingsPanel from "../components/DismissedFindingsPanel";
 import useDiagnosis from "../hooks/useDiagnosis";
 import { useSelectedApp } from "../contexts/AppContext";
 
 function Diagnosis({ onMobileMenuToggle }) {
   const { selectedApp } = useSelectedApp();
-  const { findings, loading, error } = useDiagnosis({ applicationName: selectedApp });
+  const { findings, loading, error, refetch } = useDiagnosis({ applicationName: selectedApp });
 
   const safeFindings = Array.isArray(findings) ? findings : [];
-  const highCount = safeFindings.filter((f) => f.severity === "HIGH").length;
-  const mediumCount = safeFindings.filter((f) => f.severity === "MEDIUM").length;
-  const lowCount = safeFindings.filter((f) => f.severity === "LOW").length;
+  const activeFindings = safeFindings.filter((f) => !f.dismissedInfo);
+  const highCount = activeFindings.filter((f) => f.severity === "HIGH").length;
+  const mediumCount = activeFindings.filter((f) => f.severity === "MEDIUM").length;
+  const lowCount = activeFindings.filter((f) => f.severity === "LOW").length;
 
   return (
     <>
@@ -81,6 +83,8 @@ function Diagnosis({ onMobileMenuToggle }) {
             )}
           </Stack>
         )}
+
+        <DismissedFindingsPanel applicationName={selectedApp} onRestored={refetch} />
 
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", padding: 8 }}>
