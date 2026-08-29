@@ -22,6 +22,7 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 
 const menuGroups = [
   {
@@ -33,6 +34,7 @@ const menuGroups = [
       { index: 3, label: "Fixes", icon: <BuildCircleIcon sx={{ fontSize: 17 }} /> },
       { index: 11, label: "Impact Report", icon: <VerifiedUserIcon sx={{ fontSize: 17 }} /> },
       { index: 4, label: "Telemetry", icon: <SensorsIcon sx={{ fontSize: 17 }} /> },
+      { index: 12, label: "System Health", icon: <MonitorHeartIcon sx={{ fontSize: 17 }} /> },
     ],
   },
   {

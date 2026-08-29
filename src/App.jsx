@@ -16,6 +16,7 @@ import Rules from "./pages/Rules";
 import ChatPage from "./pages/ChatPage";
 import Fixes from "./pages/Fixes";
 import ImpactReport from "./pages/ImpactReport";
+import SystemHealth from "./pages/SystemHealth";
 import Settings from "./pages/Settings";
 import { AppProvider } from "./contexts/AppContext";
 
@@ -32,6 +33,7 @@ const pages = [
   ChatPage,
   Settings,
   ImpactReport, // index 11 — appended, not inserted, so existing Sidebar indices (0-10) don't shift
+  SystemHealth, // index 12 — same append-only rule
 ];
 
 const TOKEN_KEY = "veloxdiag_session_token";
