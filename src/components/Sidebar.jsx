@@ -21,6 +21,7 @@ import BuildCircleIcon from "@mui/icons-material/BuildCircle";
 import GavelIcon from "@mui/icons-material/Gavel";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 
 const menuGroups = [
   {
@@ -30,6 +31,7 @@ const menuGroups = [
       { index: 1, label: "Diagnosis", icon: <TroubleshootIcon sx={{ fontSize: 17 }} /> },
       { index: 2, label: "Recommendations", icon: <LightbulbIcon sx={{ fontSize: 17 }} /> },
       { index: 3, label: "Fixes", icon: <BuildCircleIcon sx={{ fontSize: 17 }} /> },
+      { index: 11, label: "Impact Report", icon: <VerifiedUserIcon sx={{ fontSize: 17 }} /> },
       { index: 4, label: "Telemetry", icon: <SensorsIcon sx={{ fontSize: 17 }} /> },
     ],
   },
