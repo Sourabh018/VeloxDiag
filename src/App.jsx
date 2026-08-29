@@ -15,6 +15,7 @@ import IndexAdvisor from "./pages/IndexAdvisor";
 import Rules from "./pages/Rules";
 import ChatPage from "./pages/ChatPage";
 import Fixes from "./pages/Fixes";
+import ImpactReport from "./pages/ImpactReport";
 import Settings from "./pages/Settings";
 import { AppProvider } from "./contexts/AppContext";
 
@@ -30,6 +31,7 @@ const pages = [
   Rules,
   ChatPage,
   Settings,
+  ImpactReport, // index 11 — appended, not inserted, so existing Sidebar indices (0-10) don't shift
 ];
 
 const TOKEN_KEY = "veloxdiag_session_token";
