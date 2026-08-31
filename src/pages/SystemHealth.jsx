@@ -32,6 +32,17 @@ function fmtTime(ts) {
 }
 
 function HistoryChart({ title, data, dataKey, color, unit, emptyMessage }) {
+  // Recharts positions points, the hover cursor, and the active dot all off
+  // the XAxis's dataKey. Using the formatted "label" string (e.g. "11:51 am")
+  // for that is what caused the dot/cursor/tooltip misalignment: telemetry
+  // samples land every ~60s, so many points round to the same minute label,
+  // and a category axis with duplicate keys doesn't resolve hover position
+  // consistently. Indexing instead guarantees a unique, monotonic key for
+  // positioning — the visible ticks/tooltip text are unchanged, still pulled
+  // from the same "label" field via the formatters below.
+  const indexedData = data.map((d, i) => ({ ...d, __x: i }));
+  const labelForIndex = (i) => indexedData[i]?.label ?? "";
+
   return (
     <Paper
       elevation={0}
@@ -52,7 +63,7 @@ function HistoryChart({ title, data, dataKey, color, unit, emptyMessage }) {
       ) : (
         <Box sx={{ height: 220 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
+            <AreaChart data={indexedData}>
               <defs>
                 <linearGradient id={`health-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={color} stopOpacity={0.25} />
@@ -61,13 +72,17 @@ function HistoryChart({ title, data, dataKey, color, unit, emptyMessage }) {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
               <XAxis
-                dataKey="label"
+                dataKey="__x"
+                type="number"
+                domain={["dataMin", "dataMax"]}
+                tickFormatter={labelForIndex}
                 tick={{ fontSize: 11, fill: "#94A3B8" }}
                 axisLine={{ stroke: "#E2E8F0" }}
                 tickLine={false}
               />
               <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} width={40} />
               <Tooltip
+                labelFormatter={labelForIndex}
                 formatter={(v) => [`${v}${unit}`, title]}
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #E2E8F0" }}
               />
