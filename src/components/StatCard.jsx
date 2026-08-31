@@ -1,7 +1,7 @@
 import { Card, CardContent, Typography, Stack, Box } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import { AreaChart, Area, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, YAxis, ResponsiveContainer } from "recharts";
 
 const NEUTRAL = "#2563EB";
 const GOOD = "#059669";
@@ -175,6 +175,11 @@ function StatCard({
                     <stop offset="100%" stopColor={sparkColor} stopOpacity={0} />
                   </linearGradient>
                 </defs>
+                {/* Without this, Recharts defaults the baseline to 0 — fine for
+                    near-zero data (GC pause, threads awaiting) but makes any
+                    metric that hovers at a high value (heap %, pool %) render
+                    as a nearly-solid block instead of a legible trend line. */}
+                <YAxis domain={["dataMin", "dataMax"]} hide />
                 <Area
                   type="monotone"
                   dataKey="v"
