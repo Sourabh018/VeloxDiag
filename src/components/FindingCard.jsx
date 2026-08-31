@@ -156,6 +156,8 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
   const [dismissSaving, setDismissSaving] = useState(false);
   const [dismissError, setDismissError] = useState(null);
   const [restoring, setRestoring] = useState(false);
+  const [deletingFix, setDeletingFix] = useState(false);
+  const [fixDeleted, setFixDeleted] = useState(false);
 
   useEffect(() => {
     setDismissedInfo(finding.dismissedInfo ?? null);
@@ -191,6 +193,24 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
       setDismissError(err.message ?? "Failed to restore finding");
     } finally {
       setRestoring(false);
+    }
+  }
+
+  // Distinct from restore above: this removes an accidental/wrong "Mark as
+  // Fixed" click entirely, rather than just letting Regression Watch's
+  // auto-reopen leave a permanent "reopened" banner with no way to clear it.
+  async function handleDeleteFix() {
+    setDeletingFix(true);
+    try {
+      await apiClient.delete("/api/fixes", {
+        params: { applicationName, endpoint, ruleType },
+      });
+      setFixDeleted(true);
+    } catch (err) {
+      // Silently ignore — worst case the banner just stays, same as today.
+      console.error("Failed to delete fix snapshot", err);
+    } finally {
+      setDeletingFix(false);
     }
   }
 
@@ -344,7 +364,7 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
         </Box>
       )}
 
-      {reopenedInfo && (
+      {reopenedInfo && !fixDeleted && (
         <Box
           sx={{
             display: "flex",
@@ -357,10 +377,20 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
             marginBottom: 1.5,
           }}
         >
-          <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#991B1B" }}>
+          <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#991B1B", flexGrow: 1 }}>
             ⚠ Marked fixed on {new Date(reopenedInfo.markedFixedAt).toLocaleDateString()}
             {reopenedInfo.note ? ` ("${reopenedInfo.note}")` : ""} — issue reopened.
           </Typography>
+          <Button
+            size="small"
+            variant="text"
+            onClick={handleDeleteFix}
+            disabled={deletingFix}
+            title="Permanently remove this fix record — use this if it was marked by mistake"
+            sx={{ fontSize: 12, textTransform: "none", fontWeight: 700, color: "#991B1B", padding: 0, minWidth: 0, flexShrink: 0 }}
+          >
+            {deletingFix ? "Removing..." : "Remove"}
+          </Button>
         </Box>
       )}
 
@@ -745,6 +775,9 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
                     backgroundColor: "#EFF6FF",
                   }}
                 >
+                  <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: "#60A5FA", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.75 }}>
+                    Covers all findings on this endpoint
+                  </Typography>
                   <Typography sx={{ fontSize: 13.5, color: "#1E40AF", lineHeight: 1.6 }}>
                     {narrative}
                   </Typography>
