@@ -752,7 +752,7 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
             onClick={handleToggleNarrative}
             sx={{ fontSize: 12.5, textTransform: "none", fontWeight: 600, color: "#2563EB", padding: 0, minWidth: 0 }}
           >
-            {narrativeExpanded ? "Hide AI explanation" : "Explain with AI"}
+            {narrativeExpanded ? "Hide AI explanation" : "Explain Endpoint with AI"}
           </Button>
 
           {narrativeExpanded && (

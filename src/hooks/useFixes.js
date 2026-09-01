@@ -51,9 +51,23 @@ export default function useFixes(applicationName) {
     }
   }, [applicationName, fetchComparisons]);
 
+  const deleteFix = useCallback(async (endpoint, ruleType) => {
+    if (!applicationName || !endpoint || !ruleType) return { ok: false };
+    try {
+      await apiClient.delete("/api/fixes", {
+        params: { applicationName, endpoint, ruleType },
+      });
+      await fetchComparisons();
+      return { ok: true };
+    } catch (err) {
+      console.error("Delete fix failed:", err.message);
+      return { ok: false, error: err };
+    }
+  }, [applicationName, fetchComparisons]);
+
   useEffect(() => {
     fetchComparisons();
   }, [fetchComparisons]);
 
-  return { comparisons, loading, error, marking, markError, markFixed, refetch: fetchComparisons };
+  return { comparisons, loading, error, marking, markError, markFixed, deleteFix, refetch: fetchComparisons };
 }

@@ -1,6 +1,8 @@
-import { Box, Typography, Paper, CircularProgress, Button, Chip } from "@mui/material";
+import { useState } from "react";
+import { Box, Typography, Paper, CircularProgress, Button, Chip, IconButton, Tooltip } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import Header from "../components/Header";
 import useFixes from "../hooks/useFixes";
 import { useSelectedApp } from "../contexts/AppContext";
@@ -37,8 +39,9 @@ function formatMs(v) {
   return `${Math.round(v)}ms`;
 }
 
-function FixCard({ fix }) {
+function FixCard({ fix, onDelete }) {
   const hasVerdict = fix.status !== "WATCHING" && fix.improvementPercent !== null && fix.improvementPercent !== undefined;
+  const [confirming, setConfirming] = useState(false);
 
   return (
     <Paper
@@ -66,7 +69,33 @@ function FixCard({ fix }) {
             {fix.ruleType} · marked fixed on {new Date(fix.markedFixedAt).toLocaleString()}
           </Typography>
         </Box>
-        <StatusTag status={fix.status} />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <StatusTag status={fix.status} />
+          {confirming ? (
+            <>
+              <Button
+                size="small"
+                onClick={() => onDelete(fix)}
+                sx={{ textTransform: "none", fontSize: 12, fontWeight: 700, color: "#DC2626", minWidth: 0, px: 1 }}
+              >
+                Confirm delete
+              </Button>
+              <Button
+                size="small"
+                onClick={() => setConfirming(false)}
+                sx={{ textTransform: "none", fontSize: 12, fontWeight: 600, color: "#64748B", minWidth: 0, px: 1 }}
+              >
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <Tooltip title="Remove this fix record">
+              <IconButton size="small" onClick={() => setConfirming(true)} sx={{ color: "#94A3B8", "&:hover": { color: "#DC2626" } }}>
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
       </Box>
 
       {fix.note && (
@@ -142,8 +171,12 @@ function FixCard({ fix }) {
 
 function Fixes({ onMobileMenuToggle }) {
   const { selectedApp } = useSelectedApp();
-  const { comparisons, loading, error, refetch } = useFixes(selectedApp);
+  const { comparisons, loading, error, refetch, deleteFix } = useFixes(selectedApp);
   const safeComparisons = Array.isArray(comparisons) ? comparisons : [];
+
+  const handleDelete = async (fix) => {
+    await deleteFix(fix.endpoint, fix.ruleType);
+  };
 
   return (
     <>
@@ -219,7 +252,7 @@ function Fixes({ onMobileMenuToggle }) {
             </Typography>
           </Paper>
         ) : (
-          safeComparisons.map((fix) => <FixCard key={fix.id} fix={fix} />)
+          safeComparisons.map((fix) => <FixCard key={fix.id} fix={fix} onDelete={handleDelete} />)
         )}
       </Box>
     </>
