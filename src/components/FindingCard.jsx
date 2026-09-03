@@ -142,6 +142,14 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
   const [suggestion, setSuggestion] = useState(null);
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [suggestionError, setSuggestionError] = useState(null);
+  // Starts as the static list's precomputed value (only ever accurate for
+  // MISSING_INDEX_CANDIDATE — hardcoded false for N+1/Slow Request at build
+  // time) and is overwritten with the real per-fetch value once the actual
+  // AI suggestion comes back, since that's what the label on screen claims
+  // to describe. Before this fix the label never updated after fetch, so it
+  // showed a stale, sometimes-flatly-wrong grounding status for the text
+  // actually being displayed.
+  const [suggestionAiEnhanced, setSuggestionAiEnhanced] = useState(aiEnhanced);
 
   const [fixExpanded, setFixExpanded] = useState(false);
   const [fixNote, setFixNote] = useState("");
@@ -285,6 +293,7 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
         params: { endpoint, ruleType },
       });
       setSuggestion(res.data.suggestion);
+      setSuggestionAiEnhanced(Boolean(res.data.aiGenerated));
     } catch (err) {
       setSuggestionError(err.message ?? "Failed to generate suggestion");
     } finally {
@@ -399,7 +408,7 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
           {endpoint}
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
-          {canSuggest && aiEnhanced !== undefined && <AiEnhancedTag aiEnhanced={aiEnhanced} />}
+          {canSuggest && suggestionAiEnhanced !== undefined && <AiEnhancedTag aiEnhanced={suggestionAiEnhanced} />}
           <ConfidenceTag confidence={confidence} />
           <SeverityTag severity={severity} />
         </Box>
@@ -522,9 +531,9 @@ function FindingCard({ finding, applicationName, showExplain = true, showSuggest
                     <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#4ADE80", letterSpacing: "0.05em" }}>
                       SUGGESTED CODE OPTIMIZATION
                     </Typography>
-                    {aiEnhanced !== undefined && (
-                      <Typography sx={{ fontSize: 10.5, fontWeight: 600, color: aiEnhanced ? "#4ADE80" : "#94A3B8" }}>
-                        {aiEnhanced ? "Grounded in captured query + EXPLAIN plan" : "Generic template — no query captured yet"}
+                    {suggestionAiEnhanced !== undefined && (
+                      <Typography sx={{ fontSize: 10.5, fontWeight: 600, color: suggestionAiEnhanced ? "#4ADE80" : "#94A3B8" }}>
+                        {suggestionAiEnhanced ? "Grounded in captured query + EXPLAIN plan" : "Generic template — no query captured yet"}
                       </Typography>
                     )}
                   </Box>
