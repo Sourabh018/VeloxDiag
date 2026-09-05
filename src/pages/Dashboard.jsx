@@ -4,25 +4,12 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import TimerIcon from "@mui/icons-material/Timer";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import { motion, AnimatePresence } from "motion/react";
 import Header from "../components/Header";
 import StatCard from "../components/StatCard";
 import TrendChart from "../components/TrendChart";
 import DashboardAiSummary from "../components/DashboardAiSummary";
 import useDashboardMetrics from "../hooks/useDashboardMetrics";
 import { useSelectedApp } from "../contexts/AppContext";
-
-const MotionBox = motion.create(Box);
-const MotionPaper = motion.create(Paper);
-
-const rowVariants = {
-  hidden: { opacity: 0, x: -12 },
-  visible: (i) => ({
-    opacity: 1,
-    x: 0,
-    transition: { delay: i * 0.05, duration: 0.35, ease: "easeOut" },
-  }),
-};
 
 function severityForDuration(ms) {
   if (ms >= 3000) return { dot: "#DC2626", text: "#991B1B", bg: "#FEF2F2", border: "#FCA5A5" };
@@ -35,12 +22,7 @@ function SlowEndpointRow({ endpoint, avgDuration, count, rank }) {
   const barWidth = Math.min(100, (avgDuration / 5000) * 100);
 
   return (
-    <MotionBox
-      custom={rank}
-      variants={rowVariants}
-      initial="hidden"
-      animate="visible"
-      whileHover={{ backgroundColor: "#F8FAFC" }}
+    <Box
       sx={{
         display: "flex",
         alignItems: "center",
@@ -50,6 +32,8 @@ function SlowEndpointRow({ endpoint, avgDuration, count, rank }) {
         px: 2.5,
         borderBottom: "1px solid #F8FAFC",
         "&:last-of-type": { borderBottom: "none" },
+        "&:hover": { bgcolor: "#F8FAFC" },
+        transition: "background-color 0.15s ease",
         position: "relative",
       }}
     >
@@ -97,12 +81,9 @@ function SlowEndpointRow({ endpoint, avgDuration, count, rank }) {
           {/* Mini progress bar */}
           <Box sx={{ height: 3, bgcolor: "#F1F5F9", borderRadius: 2, overflow: "hidden" }}>
             <Box
-              component={motion.div}
-              initial={{ width: 0 }}
-              animate={{ width: `${barWidth}%` }}
-              transition={{ duration: 0.8, delay: rank * 0.05 + 0.2, ease: "easeOut" }}
               sx={{
                 height: "100%",
+                width: `${barWidth}%`,
                 bgcolor: style.dot,
                 borderRadius: 2,
                 opacity: 0.7,
@@ -141,7 +122,7 @@ function SlowEndpointRow({ endpoint, avgDuration, count, rank }) {
           {count} req{count !== 1 ? "s" : ""}
         </Typography>
       </Box>
-    </MotionBox>
+    </Box>
   );
 }
 
@@ -151,10 +132,7 @@ function PageHeader({ selectedApp }) {
   const dateStr = now.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
 
   return (
-    <MotionBox
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+    <Box
       sx={{
         mb: 3.5,
         display: "flex",
@@ -167,9 +145,6 @@ function PageHeader({ selectedApp }) {
       <Box>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
           <Box
-            component={motion.div}
-            animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
             sx={{
               width: 6,
               height: 6,
@@ -225,7 +200,7 @@ function PageHeader({ selectedApp }) {
           {dateStr} · {timeStr}
         </Typography>
       </Stack>
-    </MotionBox>
+    </Box>
   );
 }
 
@@ -264,50 +239,8 @@ function Dashboard({ onMobileMenuToggle }) {
           padding: { xs: 2.5, sm: 3, md: "32px 36px" },
           bgcolor: "#F8FAFC",
           minHeight: `calc(100vh - ${HEADER_H}px)`,
-          position: "relative",
-          overflow: "hidden",
         }}
       >
-        {/* Decorative rotating gradient orbs — purely ambient, sit behind content */}
-        <Box
-          component={motion.div}
-          aria-hidden
-          animate={{ rotate: 360 }}
-          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-          sx={{
-            position: "absolute",
-            top: -180,
-            right: -160,
-            width: 420,
-            height: 420,
-            borderRadius: "50%",
-            background:
-              "conic-gradient(from 0deg, #2563EB22, #7C3AED22, #2563EB00, #2563EB22)",
-            filter: "blur(40px)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
-        <Box
-          component={motion.div}
-          aria-hidden
-          animate={{ rotate: -360 }}
-          transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
-          sx={{
-            position: "absolute",
-            bottom: -200,
-            left: -140,
-            width: 380,
-            height: 380,
-            borderRadius: "50%",
-            background: "conic-gradient(from 90deg, #05966922, #2563EB00, #05966918)",
-            filter: "blur(48px)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
-
-        <Box sx={{ position: "relative", zIndex: 1 }}>
         <PageHeader selectedApp={selectedApp} />
 
         {/* Error banner */}
@@ -357,7 +290,6 @@ function Dashboard({ onMobileMenuToggle }) {
             {/* Stat Cards */}
             <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <StatCard
-                index={0}
                 title="Health Score"
                 value={healthScore}
                 unit="/100"
@@ -368,16 +300,14 @@ function Dashboard({ onMobileMenuToggle }) {
             </Grid>
             <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <StatCard
-                index={1}
                 title="Total Requests"
-                value={totalRequests}
+                value={totalRequests.toLocaleString()}
                 unit=""
                 icon={<BarChartIcon sx={{ fontSize: 18 }} />}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <StatCard
-                index={2}
                 title="Errors"
                 value={errorCount}
                 unit=""
@@ -388,7 +318,6 @@ function Dashboard({ onMobileMenuToggle }) {
             </Grid>
             <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <StatCard
-                index={3}
                 title="Avg Slow Duration"
                 value={avgSlowDuration}
                 unit="ms"
@@ -400,11 +329,6 @@ function Dashboard({ onMobileMenuToggle }) {
 
             {/* Trend Chart */}
             <Grid size={{ xs: 12 }}>
-              <MotionBox
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.35, ease: "easeOut" }}
-              >
               {trendHistory.length > 0 ? (
                 <TrendChart history={trendHistory} />
               ) : (
@@ -426,15 +350,11 @@ function Dashboard({ onMobileMenuToggle }) {
                   </Typography>
                 </Paper>
               )}
-              </MotionBox>
             </Grid>
 
             {/* Slow Endpoints Table */}
             <Grid size={{ xs: 12 }}>
-              <MotionBox
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.45, ease: "easeOut" }}
+              <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -475,7 +395,7 @@ function Dashboard({ onMobileMenuToggle }) {
                     }}
                   />
                 )}
-              </MotionBox>
+              </Box>
 
               {safeSlowEndpoints.length === 0 ? (
                 <Paper
@@ -576,7 +496,6 @@ function Dashboard({ onMobileMenuToggle }) {
             </Grid>
           </Grid>
         )}
-        </Box>
       </Box>
     </>
   );

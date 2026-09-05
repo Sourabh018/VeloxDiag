@@ -3,7 +3,6 @@ import MenuIcon from "@mui/icons-material/Menu";
 import BoltIcon from "@mui/icons-material/Bolt";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
 import AppSelector from "./AppSelector";
 
 function LivePulse() {
@@ -81,17 +80,12 @@ function Header({ onMobileMenuToggle }) {
 
           {/* VeloxDiag logo + heading */}
 <Stack
-  component={motion.div}
-  whileHover="hover"
   direction="row"
   spacing={1}
   alignItems="center"
   sx={{ cursor: "pointer" }}
 >
   <Box
-    component={motion.div}
-    variants={{ hover: { rotate: 18, scale: 1.08 } }}
-    transition={{ type: "spring", stiffness: 260, damping: 12 }}
     sx={{
       width: 32,
       height: 32,
@@ -113,12 +107,6 @@ function Header({ onMobileMenuToggle }) {
       fontWeight: 800,
       color: "#0F172A",
       letterSpacing: "-0.03em",
-      backgroundImage: "linear-gradient(90deg, #0F172A 0%, #2563EB 50%, #0F172A 100%)",
-      backgroundSize: "200% auto",
-      WebkitBackgroundClip: "text",
-      WebkitTextFillColor: "transparent",
-      transition: "background-position 0.6s ease",
-      "&:hover": { backgroundPosition: "-100% center" },
     }}
   >
     VeloxDiag

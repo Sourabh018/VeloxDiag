@@ -2,10 +2,6 @@ import { Card, CardContent, Typography, Stack, Box } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { AreaChart, Area, YAxis, ResponsiveContainer } from "recharts";
-import { motion } from "motion/react";
-import AnimatedNumber from "./AnimatedNumber";
-
-const MotionCard = motion.create(Card);
 
 const NEUTRAL = "#2563EB";
 const GOOD = "#059669";
@@ -29,7 +25,6 @@ function StatCard({
   thresholds,
   reverseThresholds = false,
   icon,
-  index = 0,
 }) {
   const isUp = delta > 0;
   const isGood = invert ? delta <= 0 : delta >= 0;
@@ -51,12 +46,8 @@ function StatCard({
   const { bg, border, accent } = STATUS_BG[statusColor] || STATUS_BG[NEUTRAL];
 
   return (
-    <MotionCard
+    <Card
       elevation={0}
-      initial={{ opacity: 0, y: 18, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -4, scale: 1.015 }}
       sx={{
         height: "100%",
         position: "relative",
@@ -64,19 +55,17 @@ function StatCard({
         bgcolor: "#FFFFFF",
         border: "1px solid #E2E8F0",
         borderRadius: "14px",
+        transition: "all 0.2s ease",
         cursor: "default",
         "&:hover": {
-          boxShadow: "0 12px 28px rgba(15, 23, 42, 0.10)",
+          boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
           borderColor: "#CBD5E1",
+          transform: "translateY(-1px)",
         },
       }}
     >
-      {/* Colored top accent bar — sweeps in on mount */}
+      {/* Colored top accent bar */}
       <Box
-        component={motion.div}
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.7, delay: index * 0.08 + 0.15, ease: "easeOut" }}
         sx={{
           position: "absolute",
           top: 0,
@@ -85,25 +74,7 @@ function StatCard({
           height: 3,
           bgcolor: accent,
           borderRadius: "14px 14px 0 0",
-          transformOrigin: "left",
         }}
-      />
-      {/* Soft glowing orb that drifts on hover */}
-      <Box
-        component={motion.div}
-        aria-hidden
-        sx={{
-          position: "absolute",
-          top: -30,
-          right: -30,
-          width: 90,
-          height: 90,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${accent}22 0%, transparent 70%)`,
-          pointerEvents: "none",
-        }}
-        animate={{ scale: [1, 1.25, 1], opacity: [0.6, 1, 0.6] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: index * 0.3 }}
       />
 
       <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 }, pt: 3 }}>
@@ -112,9 +83,6 @@ function StatCard({
           <Stack direction="row" spacing={1.25} alignItems="center">
             {icon && (
               <Box
-                component={motion.div}
-                whileHover={{ rotate: 12, scale: 1.08 }}
-                transition={{ type: "spring", stiffness: 300, damping: 12 }}
                 sx={{
                   width: 34,
                   height: 34,
@@ -187,7 +155,7 @@ function StatCard({
             lineHeight: 1,
           }}
         >
-          <AnimatedNumber value={value} />
+          {value}
           <Box
             component="span"
             sx={{ fontSize: 15, fontWeight: 600, color: "#94A3B8", ml: 0.75, letterSpacing: 0 }}
@@ -225,7 +193,7 @@ function StatCard({
           </Box>
         )}
       </CardContent>
-    </MotionCard>
+    </Card>
   );
 }
 

@@ -2,10 +2,7 @@ import { useState } from "react";
 import { Box, Typography, Button, CircularProgress, Divider } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { motion, AnimatePresence } from "motion/react";
 import apiClient from "../api/client";
-
-const MotionBox = motion.create(Box);
 
 function DashboardAiSummary({ applicationName }) {
   const [summary, setSummary] = useState(null);
@@ -29,10 +26,6 @@ function DashboardAiSummary({ applicationName }) {
 
   return (
     <Box
-      component={motion.div}
-      initial={{ opacity: 0, y: -12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
       sx={{
         position: "relative",
         overflow: "hidden",
@@ -43,12 +36,8 @@ function DashboardAiSummary({ applicationName }) {
         boxShadow: "0 2px 12px rgba(99, 102, 241, 0.07)",
       }}
     >
-      {/* Decorative blobs — slow rotating drift for a "living" feel */}
+      {/* Decorative blobs */}
       <Box
-        component={motion.div}
-        aria-hidden
-        animate={{ rotate: 360 }}
-        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
         sx={{
           position: "absolute",
           top: -30,
@@ -61,10 +50,6 @@ function DashboardAiSummary({ applicationName }) {
         }}
       />
       <Box
-        component={motion.div}
-        aria-hidden
-        animate={{ scale: [1, 1.15, 1] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         sx={{
           position: "absolute",
           bottom: -20,
@@ -90,9 +75,6 @@ function DashboardAiSummary({ applicationName }) {
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Box
-                component={motion.div}
-                animate={{ rotate: [0, 15, -10, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
                 sx={{
                   width: 44,
                   height: 44,
@@ -128,9 +110,6 @@ function DashboardAiSummary({ applicationName }) {
             </Box>
 
             <Button
-              component={motion.button}
-              whileHover={{ scale: 1.03, y: -1 }}
-              whileTap={{ scale: 0.97 }}
               onClick={fetchSummary}
               variant="contained"
               startIcon={<AutoAwesomeIcon sx={{ fontSize: 16 }} />}
@@ -149,7 +128,9 @@ function DashboardAiSummary({ applicationName }) {
                 "&:hover": {
                   background: "linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)",
                   boxShadow: "0 6px 16px rgba(99, 102, 241, 0.45)",
+                  transform: "translateY(-1px)",
                 },
+                transition: "all 0.2s ease",
               }}
             >
               Summarize with AI
@@ -158,11 +139,7 @@ function DashboardAiSummary({ applicationName }) {
         )}
 
         {loading && (
-          <MotionBox
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            sx={{ display: "flex", alignItems: "center", gap: 2, py: 0.5 }}
-          >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, py: 0.5 }}>
             <CircularProgress size={20} sx={{ color: "#6366F1" }} />
             <Box>
               <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#312E81" }}>
@@ -172,7 +149,7 @@ function DashboardAiSummary({ applicationName }) {
                 Scanning metrics, rule findings, and anomalies with AI
               </Typography>
             </Box>
-          </MotionBox>
+          </Box>
         )}
 
         {error && (
@@ -184,17 +161,9 @@ function DashboardAiSummary({ applicationName }) {
         )}
 
         {summary && !loading && (
-          <MotionBox
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-          >
+          <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
               <Box
-                component={motion.div}
-                initial={{ scale: 0, rotate: -90 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 260, damping: 15 }}
                 sx={{
                   width: 36,
                   height: 36,
@@ -251,7 +220,7 @@ function DashboardAiSummary({ applicationName }) {
                 · Powered by VeloxDiag AI
               </Typography>
             </Box>
-          </MotionBox>
+          </Box>
         )}
       </Box>
     </Box>
