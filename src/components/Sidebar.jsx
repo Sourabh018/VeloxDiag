@@ -23,6 +23,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
+import { motion, AnimatePresence, LayoutGroup } from "motion/react";
 
 const menuGroups = [
   {
@@ -69,6 +70,18 @@ function LogoMark() {
       }}
     >
       <Box
+        component={motion.div}
+        whileHover={{ rotate: 15 }}
+        animate={{ rotate: [0, 0, 360] }}
+        transition={{
+          rotate: {
+            duration: 6,
+            repeat: Infinity,
+            repeatDelay: 4,
+            ease: "easeInOut",
+            times: [0, 0.85, 1],
+          },
+        }}
         sx={{
           width: 34,
           height: 34,
@@ -115,7 +128,7 @@ function LogoMark() {
   );
 }
 
-function SidebarContent({ activeIndex, onSelect }) {
+function SidebarContent({ activeIndex, onSelect, scopeId }) {
   const userEmail = window.__veloxdiagCurrentEmail || "";
 
   const handleLogout = () => {
@@ -123,6 +136,7 @@ function SidebarContent({ activeIndex, onSelect }) {
   };
 
   return (
+    <LayoutGroup id={scopeId}>
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Logo */}
       <LogoMark />
@@ -160,9 +174,9 @@ function SidebarContent({ activeIndex, onSelect }) {
                       px: 1.5,
                       position: "relative",
                       color: isSelected ? "#1D4ED8" : "#64748B",
-                      bgcolor: isSelected ? "#EFF6FF" : "transparent",
+                      bgcolor: "transparent",
                       "&.Mui-selected": {
-                        bgcolor: "#EFF6FF",
+                        bgcolor: "transparent",
                         color: "#1D4ED8",
                         "&:hover": { bgcolor: "#DBEAFE" },
                       },
@@ -170,12 +184,30 @@ function SidebarContent({ activeIndex, onSelect }) {
                         bgcolor: isSelected ? "#DBEAFE" : "#F1F5F9",
                         color: isSelected ? "#1D4ED8" : "#0F172A",
                       },
-                      transition: "all 0.15s ease",
+                      transition: "color 0.15s ease",
                     }}
                   >
+                    {/* Sliding selected-pill background, shared across items via layoutId */}
+                    {isSelected && (
+                      <Box
+                        component={motion.div}
+                        layoutId="sidebar-active-pill"
+                        transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          borderRadius: "9px",
+                          bgcolor: "#EFF6FF",
+                          zIndex: 0,
+                        }}
+                      />
+                    )}
                     {/* Active indicator bar */}
                     {isSelected && (
                       <Box
+                        component={motion.div}
+                        layoutId="sidebar-active-bar"
+                        transition={{ type: "spring", stiffness: 500, damping: 40 }}
                         sx={{
                           position: "absolute",
                           left: 0,
@@ -184,20 +216,27 @@ function SidebarContent({ activeIndex, onSelect }) {
                           width: 3,
                           bgcolor: "#2563EB",
                           borderRadius: "0 3px 3px 0",
+                          zIndex: 1,
                         }}
                       />
                     )}
                     <ListItemIcon
+                      component={motion.div}
+                      whileHover={{ scale: 1.15, rotate: -6 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 10 }}
                       sx={{
                         minWidth: 30,
                         color: isSelected ? "#2563EB" : "#94A3B8",
                         transition: "color 0.15s ease",
+                        position: "relative",
+                        zIndex: 1,
                       }}
                     >
                       {item.icon}
                     </ListItemIcon>
                     <ListItemText
                       primary={item.label}
+                      sx={{ position: "relative", zIndex: 1 }}
                       slotProps={{
                         primary: {
                           sx: {
@@ -298,6 +337,7 @@ function SidebarContent({ activeIndex, onSelect }) {
         </ListItemButton>
       </Box>
     </Box>
+    </LayoutGroup>
   );
 }
 
@@ -322,7 +362,7 @@ function Sidebar({ activeIndex, onSelect, mobileOpen, onMobileClose }) {
           "& .MuiDrawer-paper": paperSx,
         }}
       >
-        <SidebarContent activeIndex={activeIndex} onSelect={onSelect} />
+        <SidebarContent activeIndex={activeIndex} onSelect={onSelect} scopeId="desktop" />
       </Drawer>
 
       {/* Mobile temporary drawer */}
@@ -336,7 +376,7 @@ function Sidebar({ activeIndex, onSelect, mobileOpen, onMobileClose }) {
           "& .MuiDrawer-paper": paperSx,
         }}
       >
-        <SidebarContent activeIndex={activeIndex} onSelect={onSelect} />
+        <SidebarContent activeIndex={activeIndex} onSelect={onSelect} scopeId="mobile" />
       </Drawer>
     </>
   );

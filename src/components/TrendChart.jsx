@@ -8,6 +8,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { motion } from "motion/react";
+
+const MotionCard = motion.create(Card);
 
 function CustomTooltip({ active, payload }) {
   if (active && payload && payload.length) {
@@ -51,8 +54,12 @@ function TrendChart({ history = [] }) {
   const trendUp = trend > 0;
 
   return (
-    <Card
+    <MotionCard
       elevation={0}
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      whileHover={{ boxShadow: "0 12px 28px rgba(15, 23, 42, 0.08)" }}
       sx={{
         height: "100%",
         bgcolor: "#FFFFFF",
@@ -172,7 +179,9 @@ function TrendChart({ history = [] }) {
                 stroke="#2563EB"
                 strokeWidth={2}
                 fill="url(#durationFill)"
-                isAnimationActive={false}
+                isAnimationActive={true}
+                animationDuration={900}
+                animationEasing="ease-out"
                 dot={false}
                 activeDot={{ r: 4, fill: "#2563EB", strokeWidth: 2, stroke: "#fff" }}
               />
@@ -180,7 +189,7 @@ function TrendChart({ history = [] }) {
           </ResponsiveContainer>
         </Box>
       </CardContent>
-    </Card>
+    </MotionCard>
   );
 }
 
