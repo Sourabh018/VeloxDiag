@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ThemeProvider, CssBaseline } from "@mui/material";
+import { ThemeProvider, CssBaseline, Box } from "@mui/material";
 import theme from "./theme";
 import Sidebar from "./components/Sidebar";
 import LoginGate from "./components/LoginGate";
@@ -19,6 +19,7 @@ import ImpactReport from "./pages/ImpactReport";
 import SystemHealth from "./pages/SystemHealth";
 import Settings from "./pages/Settings";
 import { AppProvider } from "./contexts/AppContext";
+import BackgroundScene from "./components/3d/BackgroundScene";
 
 const pages = [
   Dashboard,
@@ -63,19 +64,22 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <BackgroundScene intensity="ambient" />
       <LoginGate>
         <AppGate>
           <AppProvider>
-            <Sidebar
-              activeIndex={activeIndex}
-              onSelect={(index) => {
-                setActiveIndex(index);
-                setMobileOpen(false);
-              }}
-              mobileOpen={mobileOpen}
-              onMobileClose={() => setMobileOpen(false)}
-            />
-            <ActivePage onMobileMenuToggle={handleMobileMenuToggle} />
+            <Box sx={{ position: "relative", zIndex: 1 }}>
+              <Sidebar
+                activeIndex={activeIndex}
+                onSelect={(index) => {
+                  setActiveIndex(index);
+                  setMobileOpen(false);
+                }}
+                mobileOpen={mobileOpen}
+                onMobileClose={() => setMobileOpen(false)}
+              />
+              <ActivePage onMobileMenuToggle={handleMobileMenuToggle} />
+            </Box>
           </AppProvider>
         </AppGate>
       </LoginGate>

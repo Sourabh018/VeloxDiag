@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, useInView, AnimatePresence } from "motion/react";
+import { useEffect, useRef, useState, cloneElement } from "react";
+import { motion, useInView, AnimatePresence, useMotionValue, useSpring, useTransform } from "motion/react";
+import BackgroundScene from "../components/3d/BackgroundScene";
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap');
@@ -13,12 +14,71 @@ const CSS = `
     --body: clamp(0.85rem, 0.2vw + 0.75rem, 0.95rem);
     --micro: clamp(0.7rem, 0.15vw + 0.62rem, 0.8rem);
     --gap-section: clamp(4.5rem, 9vw, 8rem);
+
+    /* ── theme tokens: light (default) ── */
+    --bg-page: #F8FAFC;
+    --bg-glow: rgba(37,99,235,0.05);
+    --bg-elevated: #FFFFFF;
+    --bg-stats: #FFFFFF;
+    --bg-nav: rgba(248,250,252,0.7);
+    --bg-cta-sec: #FFFFFF;
+    --bg-chip: #EFF6FF;
+    --border-color: #E2E8F0;
+    --border-chip: #DBEAFE;
+    --border-badge: #BFDBFE;
+    --border-ghost: #E2E8F0;
+    --border-card-hover: #BFDBFE;
+    --text-primary: #0F172A;
+    --text-secondary: #64748B;
+    --text-tertiary: #94A3B8;
+    --text-ghost: #475569;
+    --text-cta-sec: #334155;
+    --accent-text: #2563EB;
+    --badge-bg: rgba(255,255,255,0.7);
+    --badge-text: #2563EB;
+    --chip-text: #2563EB;
+    --section-line: #CBD5E1;
+    --shadow-card-hover: rgba(37,99,235,0.25);
+    --shadow-tab-active: rgba(15,23,42,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      /* ── theme tokens: dark (auto, follows OS/browser setting) ── */
+      --bg-page: #0B1220;
+      --bg-glow: rgba(37,99,235,0.16);
+      --bg-elevated: #121A2B;
+      --bg-stats: #0D1420;
+      --bg-nav: rgba(11,18,32,0.75);
+      --bg-cta-sec: #121A2B;
+      --bg-chip: rgba(37,99,235,0.12);
+      --border-color: rgba(255,255,255,0.08);
+      --border-chip: rgba(37,99,235,0.3);
+      --border-badge: rgba(37,99,235,0.35);
+      --border-ghost: rgba(255,255,255,0.12);
+      --border-card-hover: rgba(37,99,235,0.4);
+      --text-primary: #F1F5F9;
+      --text-secondary: #94A3B8;
+      --text-tertiary: #64748B;
+      --text-ghost: #94A3B8;
+      --text-cta-sec: #CBD5E1;
+      --accent-text: #60A5FA;
+      --badge-bg: rgba(37,99,235,0.1);
+      --badge-text: #93C5FD;
+      --chip-text: #93C5FD;
+      --section-line: rgba(255,255,255,0.15);
+      --shadow-card-hover: rgba(37,99,235,0.35);
+      --shadow-tab-active: rgba(0,0,0,0.4);
+    }
   }
   * { box-sizing: border-box; }
   .land-root {
-    min-height: 100vh; background: #F8FAFC;
-    font-family: 'DM Sans', sans-serif; color: #0F172A;
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, var(--bg-glow), transparent 60%),
+      var(--bg-page);
+    font-family: 'DM Sans', sans-serif; color: var(--text-primary);
     overflow-x: hidden; position: relative;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   .land-canvas-bg {
     position: fixed; inset: 0; z-index: 0; pointer-events: none;
@@ -29,59 +89,59 @@ const CSS = `
     position: sticky; top: 0; z-index: 40;
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 var(--pad-x); height: var(--nav-h);
-    background: rgba(248,250,252,0.7);
+    background: var(--bg-nav);
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border-bottom: 0.5px solid #E2E8F0;
+    border-bottom: 0.5px solid var(--border-color);
   }
   .land-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
   .land-logo { width: 32px; height: 32px; background: #2563EB; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .land-brandname { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #0F172A; white-space: nowrap; }
-  .land-brandname span { color: #2563EB; }
+  .land-brandname { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+  .land-brandname span { color: var(--accent-text); }
   .land-nav-btns { display: flex; gap: 10px; align-items: center; }
-  .land-btn-ghost { padding: 8px 16px; background: transparent; border: 0.5px solid #E2E8F0; border-radius: 8px; color: #475569; font-size: 13px; font-weight: 500; cursor: pointer; transition: border-color 0.2s, color 0.2s; font-family: 'DM Sans', sans-serif; }
-  .land-btn-ghost:hover { border-color: #2563EB; color: #0F172A; }
+  .land-btn-ghost { padding: 8px 16px; background: transparent; border: 0.5px solid var(--border-ghost); border-radius: 8px; color: var(--text-ghost); font-size: 13px; font-weight: 500; cursor: pointer; transition: border-color 0.2s, color 0.2s; font-family: 'DM Sans', sans-serif; }
+  .land-btn-ghost:hover { border-color: #2563EB; color: var(--text-primary); }
   .land-btn-primary { padding: 8px 18px; background: #2563EB; border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; font-family: 'Syne', sans-serif; cursor: pointer; transition: background 0.2s, transform 0.15s; }
   .land-btn-primary:hover { background: #1D4ED8; transform: translateY(-1px); }
 
   /* ── HERO ── */
   .land-hero { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: clamp(4rem,10vh,7rem) var(--pad-x) clamp(3rem,6vh,4rem); text-align: center; }
-  .land-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.7); backdrop-filter: blur(6px); border: 0.5px solid #BFDBFE; color: #2563EB; font-size: var(--micro); font-weight: 500; padding: 5px 14px; border-radius: 20px; margin-bottom: 1.75rem; letter-spacing: 0.3px; }
-  .land-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #2563EB; animation: land-pulse 2s ease-in-out infinite; }
+  .land-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--badge-bg); backdrop-filter: blur(6px); border: 0.5px solid var(--border-badge); color: var(--badge-text); font-size: var(--micro); font-weight: 500; padding: 5px 14px; border-radius: 20px; margin-bottom: 1.75rem; letter-spacing: 0.3px; }
+  .land-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-text); animation: land-pulse 2s ease-in-out infinite; }
   @keyframes land-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .land-h1 { font-family: 'Syne', sans-serif; font-size: var(--h1); font-weight: 800; line-height: 1.08; color: #0F172A; margin: 0 0 1.5rem; letter-spacing: -1px; }
+  .land-h1 { font-family: 'Syne', sans-serif; font-size: var(--h1); font-weight: 800; line-height: 1.08; color: var(--text-primary); margin: 0 0 1.5rem; letter-spacing: -1px; }
   .land-h1-word { display: inline-block; overflow: hidden; }
-  .land-h1 .accent { color: #2563EB; }
-  .land-hero-sub { font-size: var(--sub); color: #64748B; line-height: 1.7; margin: 0 auto 2.25rem; max-width: 560px; }
+  .land-h1 .accent { color: var(--accent-text); }
+  .land-hero-sub { font-size: var(--sub); color: var(--text-secondary); line-height: 1.7; margin: 0 auto 2.25rem; max-width: 560px; }
   .land-cta-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
   .land-cta-main { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: #2563EB; border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 600; font-family: 'Syne', sans-serif; cursor: pointer; transition: background 0.2s, transform 0.15s; }
   .land-cta-main:hover { background: #1D4ED8; transform: translateY(-1px); }
   .land-cta-main svg { transition: transform 0.2s; }
   .land-cta-main:hover svg { transform: translateX(3px); }
-  .land-cta-sec { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: #FFFFFF; border: 0.5px solid #E2E8F0; border-radius: 12px; color: #334155; font-size: 15px; cursor: pointer; transition: border-color 0.2s, color 0.2s; font-family: 'DM Sans', sans-serif; }
-  .land-cta-sec:hover { border-color: #2563EB; color: #0F172A; }
+  .land-cta-sec { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: var(--bg-cta-sec); border: 0.5px solid var(--border-color); border-radius: 12px; color: var(--text-cta-sec); font-size: 15px; cursor: pointer; transition: border-color 0.2s, color 0.2s; font-family: 'DM Sans', sans-serif; }
+  .land-cta-sec:hover { border-color: #2563EB; color: var(--text-primary); }
 
-  /* ── MARQUEE TICKER ── */
-  .land-ticker-wrap { position: relative; z-index: 1; border-top: 0.5px solid #E2E8F0; border-bottom: 0.5px solid #E2E8F0; background: #0F172A; overflow: hidden; padding: 14px 0; }
+  /* ── MARQUEE TICKER (always dark chrome — reads as a live status strip in either theme) ── */
+  .land-ticker-wrap { position: relative; z-index: 1; border-top: 0.5px solid var(--border-color); border-bottom: 0.5px solid var(--border-color); background: #0B1220; overflow: hidden; padding: 14px 0; }
   .land-ticker-track { display: flex; gap: 0; white-space: nowrap; animation: land-marquee 28s linear infinite; width: max-content; }
   @keyframes land-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-  .land-ticker-item { display: flex; align-items: center; gap: 8px; padding: 0 2rem; font-family: 'DM Mono', monospace; font-size: 12.5px; color: #94A3B8; border-right: 0.5px solid #1E293B; }
-  .land-ticker-item .path { color: #E2E8F0; }
+  .land-ticker-item { display: flex; align-items: center; gap: 8px; padding: 0 2rem; font-family: 'DM Mono', monospace; font-size: 12.5px; color: #64748B; border-right: 0.5px solid rgba(255,255,255,0.08); }
+  .land-ticker-item .path { color: #CBD5E1; }
   .land-ticker-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
   /* ── SECTION SHELL ── */
   .land-section { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: var(--gap-section) var(--pad-x) 0; }
-  .land-section-index { font-family: 'DM Mono', monospace; font-size: var(--micro); color: #94A3B8; letter-spacing: 2px; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 10px; }
-  .land-section-index .line { width: 32px; height: 1px; background: #CBD5E1; }
-  .land-section-title { font-family: 'Syne', sans-serif; font-size: var(--h2); font-weight: 700; color: #0F172A; margin: 0 0 0.5rem; letter-spacing: -0.5px; }
-  .land-section-sub { font-size: var(--body); color: #64748B; margin: 0 0 3rem; max-width: 500px; }
+  .land-section-index { font-family: 'DM Mono', monospace; font-size: var(--micro); color: var(--text-tertiary); letter-spacing: 2px; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 10px; }
+  .land-section-index .line { width: 32px; height: 1px; background: var(--section-line); }
+  .land-section-title { font-family: 'Syne', sans-serif; font-size: var(--h2); font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem; letter-spacing: -0.5px; }
+  .land-section-sub { font-size: var(--body); color: var(--text-secondary); margin: 0 0 3rem; max-width: 500px; }
 
   /* ── STATS ── */
-  .land-stats { position: relative; z-index: 1; display: flex; justify-content: center; flex-wrap: wrap; background: #FFFFFF; border-bottom: 0.5px solid #E2E8F0; }
-  .land-stat { flex: 1; min-width: 160px; padding: 2rem 1.5rem; text-align: center; border-right: 0.5px solid #E2E8F0; }
+  .land-stats { position: relative; z-index: 1; display: flex; justify-content: center; flex-wrap: wrap; background: var(--bg-stats); border-bottom: 0.5px solid var(--border-color); }
+  .land-stat { flex: 1; min-width: 160px; padding: 2rem 1.5rem; text-align: center; border-right: 0.5px solid var(--border-color); }
   .land-stat:last-child { border-right: none; }
-  .land-stat-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 700; color: #0F172A; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
-  .land-stat-num .acc { color: #2563EB; }
-  .land-stat-label { font-size: var(--micro); color: #64748B; }
+  .land-stat-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+  .land-stat-num .acc { color: var(--accent-text); }
+  .land-stat-label { font-size: var(--micro); color: var(--text-tertiary); }
 
   /* ── PRODUCT SHOWCASE (stacked pin-scroll) ── */
   .land-showcase { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: var(--gap-section) var(--pad-x) 0; }
@@ -90,13 +150,13 @@ const CSS = `
   @media (max-width: 900px) { .land-showcase-grid { grid-template-columns: 1fr; } .land-showcase-sticky { position: relative; top: 0; } }
   .land-showcase-tabs { display: flex; flex-direction: column; gap: 0.5rem; }
   .land-showcase-tab { padding: 1.1rem 1.25rem; border-radius: 12px; cursor: pointer; transition: background 0.25s; border: 0.5px solid transparent; }
-  .land-showcase-tab.active { background: #FFFFFF; border-color: #E2E8F0; box-shadow: 0 4px 20px -8px rgba(15,23,42,0.08); }
-  .land-showcase-tab-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-  .land-showcase-tab-desc { font-size: 12.5px; color: #64748B; line-height: 1.5; }
-  .land-showcase-tab:not(.active) .land-showcase-tab-title { color: #94A3B8; }
+  .land-showcase-tab.active { background: var(--bg-elevated); border-color: var(--border-color); box-shadow: 0 4px 20px -8px var(--shadow-tab-active); }
+  .land-showcase-tab-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .land-showcase-tab-desc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+  .land-showcase-tab:not(.active) .land-showcase-tab-title { color: var(--text-tertiary); }
 
-  /* fake product panel shared chrome */
-  .land-mock { background: #FFFFFF; border: 0.5px solid #E2E8F0; border-radius: 16px; box-shadow: 0 24px 60px -24px rgba(37,99,235,0.2); overflow: hidden; }
+  /* fake product panel shared chrome — kept always-light, reads as a real in-app screenshot floating on the page */
+  .land-mock { background: #FFFFFF; border: 0.5px solid #E2E8F0; border-radius: 16px; box-shadow: 0 30px 70px -24px rgba(0,0,0,0.4); overflow: hidden; }
   .land-mock-topbar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 0.5px solid #F1F5F9; background: #FAFBFC; }
   .land-mock-dot { width: 8px; height: 8px; border-radius: 50%; }
   .land-mock-body { padding: 1.25rem; }
@@ -114,41 +174,66 @@ const CSS = `
   /* ── MODULES ── */
   .land-modules-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 1.25rem; }
   @media (max-width: 800px) { .land-modules-grid { grid-template-columns: 1fr; } }
-  .land-module-card { background: #FFFFFF; border: 0.5px solid #E2E8F0; border-radius: 16px; padding: 1.75rem; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; }
-  .land-module-card:hover { border-color: #BFDBFE; transform: translateY(-3px); box-shadow: 0 16px 40px -20px rgba(37,99,235,0.25); }
+  .land-module-card { background: var(--bg-elevated); border: 0.5px solid var(--border-color); border-radius: 16px; padding: 1.75rem; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; }
+  .land-module-card:hover { border-color: var(--border-card-hover); transform: translateY(-3px); box-shadow: 0 16px 40px -20px var(--shadow-card-hover); }
   .land-module-featured { display: flex; flex-direction: column; justify-content: space-between; }
   .land-module-stack { display: flex; flex-direction: column; gap: 1.25rem; }
-  .land-module-icon-wrap { width: 44px; height: 44px; border-radius: 11px; background: #EFF6FF; border: 0.5px solid #BFDBFE; display: flex; align-items: center; justify-content: center; margin-bottom: 1.1rem; }
-  .land-module-name { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.4rem; }
-  .land-module-desc { font-size: var(--body); color: #64748B; line-height: 1.55; margin-bottom: 1.1rem; }
+  .land-module-icon-wrap { width: 44px; height: 44px; border-radius: 11px; background: var(--bg-chip); border: 0.5px solid var(--border-badge); display: flex; align-items: center; justify-content: center; margin-bottom: 1.1rem; }
+  .land-module-name { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem; }
+  .land-module-desc { font-size: var(--body); color: var(--text-secondary); line-height: 1.55; margin-bottom: 1.1rem; }
   .land-module-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-  .land-module-tag { font-size: 11px; font-weight: 500; color: #2563EB; background: #EFF6FF; border: 0.5px solid #DBEAFE; padding: 4px 10px; border-radius: 6px; }
+  .land-module-tag { font-size: 11px; font-weight: 500; color: var(--chip-text); background: var(--bg-chip); border: 0.5px solid var(--border-chip); padding: 4px 10px; border-radius: 6px; }
 
   /* ── FEATURES alternating ── */
-  .land-feature-row { display: grid; grid-template-columns: 1fr; gap: 1.5rem; padding: 2.5rem 0; border-bottom: 0.5px solid #E2E8F0; align-items: center; }
+  .land-feature-row { display: grid; grid-template-columns: 1fr; gap: 1.5rem; padding: 2.5rem 0; border-bottom: 0.5px solid var(--border-color); align-items: center; }
   .land-feature-row:last-child { border-bottom: none; }
   @media (min-width: 720px) { .land-feature-row { grid-template-columns: 1fr 1fr; } .land-feature-row.reverse .land-feat-visual { order: 2; } }
-  .land-feat-icon-wrap { width: 44px; height: 44px; border-radius: 11px; background: #EFF6FF; border: 0.5px solid #BFDBFE; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
-  .land-feat-title { font-size: 1.25rem; font-weight: 700; color: #0F172A; font-family: 'Syne', sans-serif; margin-bottom: 0.5rem; }
-  .land-feat-desc { font-size: var(--body); color: #64748B; line-height: 1.6; max-width: 420px; }
+  .land-feat-icon-wrap { width: 44px; height: 44px; border-radius: 11px; background: var(--bg-chip); border: 0.5px solid var(--border-badge); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+  .land-feat-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); font-family: 'Syne', sans-serif; margin-bottom: 0.5rem; }
+  .land-feat-desc { font-size: var(--body); color: var(--text-secondary); line-height: 1.6; max-width: 420px; }
   .land-feat-visual { display: flex; align-items: center; justify-content: center; }
-  .land-feat-visual-inner { width: 100%; max-width: 340px; aspect-ratio: 4/3; background: #FFFFFF; border: 0.5px solid #E2E8F0; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 50px -24px rgba(15,23,42,0.15); position: relative; overflow: hidden; }
+  .land-features-3d-wrap { perspective: 1400px; }
+  .land-feat-visual-inner {
+    width: 100%; max-width: 340px; aspect-ratio: 4/3; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden; transform-style: preserve-3d; will-change: transform;
+    background:
+      radial-gradient(120% 130% at 25% 15%, color-mix(in srgb, var(--panel-accent, #2563EB) 32%, transparent), transparent 60%),
+      linear-gradient(150deg, #060A13 0%, #0D1526 55%, #060A13 100%);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    box-shadow: 0 24px 60px -24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .land-feat-visual-inner::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px);
+    background-size: 26px 26px;
+    mask-image: radial-gradient(circle at 50% 45%, black 35%, transparent 78%);
+    -webkit-mask-image: radial-gradient(circle at 50% 45%, black 35%, transparent 78%);
+  }
+  .land-feat-visual-inner::after {
+    content: ""; position: absolute; width: 140px; height: 140px; border-radius: 50%;
+    background: color-mix(in srgb, var(--panel-accent, #2563EB) 60%, transparent);
+    filter: blur(38px); opacity: 0.55; pointer-events: none;
+  }
+  .land-feat-visual-inner > div { position: relative; transform: translateZ(40px); filter: drop-shadow(0 0 10px color-mix(in srgb, var(--panel-accent, #2563EB) 55%, transparent)); }
 
-  /* ── CTA BANNER ── */
+  /* ── CTA BANNER (always a dark/blue island — pops against either theme) ── */
   .land-banner { position: relative; z-index: 1; max-width: 1200px; margin: var(--gap-section) auto 0; padding: 0 var(--pad-x); }
-  .land-banner-inner { position: relative; background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); border-radius: 20px; padding: clamp(2.5rem,6vw,4rem); text-align: center; overflow: hidden; }
-  .land-banner-sweep { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(37,99,235,0.18) 45%, transparent 60%); background-size: 200% 100%; animation: land-sweep 5s linear infinite; pointer-events: none; }
+  .land-banner-inner { position: relative; background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%); border: 0.5px solid rgba(96,165,250,0.25); border-radius: 20px; padding: clamp(2.5rem,6vw,4rem); text-align: center; overflow: hidden; }
+  .land-banner-sweep { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(96,165,250,0.2) 45%, transparent 60%); background-size: 200% 100%; animation: land-sweep 5s linear infinite; pointer-events: none; }
   @keyframes land-sweep { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   .land-banner-inner h2 { position: relative; font-family: 'Syne', sans-serif; font-size: var(--h2); font-weight: 700; color: #F8FAFC; margin: 0 0 0.75rem; }
   .land-banner-inner p { position: relative; font-size: var(--body); color: #94A3B8; margin: 0 0 2rem; }
   .land-banner-inner .land-cta-main { position: relative; }
 
   /* ── FOOTER ── */
-  .land-footer { position: relative; z-index: 1; max-width: 1200px; margin: var(--gap-section) auto 0; border-top: 0.5px solid #E2E8F0; padding: 1.75rem var(--pad-x); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
-  .land-footer-left { font-size: var(--micro); color: #94A3B8; }
+  .land-footer { position: relative; z-index: 1; max-width: 1200px; margin: var(--gap-section) auto 0; border-top: 0.5px solid var(--border-color); padding: 1.75rem var(--pad-x); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+  .land-footer-left { font-size: var(--micro); color: var(--text-tertiary); }
   .land-footer-right { display: flex; gap: 1.5rem; }
-  .land-footer-right a, .land-footer-right button { font-size: var(--micro); color: #64748B; background: none; border: none; cursor: pointer; padding: 0; font-family: 'DM Sans', sans-serif; }
-  .land-footer-right a:hover, .land-footer-right button:hover { color: #2563EB; }
+  .land-footer-right a, .land-footer-right button { font-size: var(--micro); color: var(--text-secondary); background: none; border: none; cursor: pointer; padding: 0; font-family: 'DM Sans', sans-serif; }
+  .land-footer-right a:hover, .land-footer-right button:hover { color: var(--accent-text); }
 
   @media (max-width: 640px) {
     .land-nav { padding: 0 1.1rem; }
@@ -285,6 +370,56 @@ const revealOnScroll = {
   viewport: { once: true, margin: "-80px" },
   transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] },
 };
+
+// Staggered "one by one" 3D entrance for the features list.
+const featureContainerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.22, delayChildren: 0.05 } },
+};
+const featureItemVariants = {
+  hidden: { opacity: 0, y: 60, rotateX: -35, scale: 0.92 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    rotateX: 0,
+    scale: 1,
+    transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
+// Interactive 3D tilt panel — follows the cursor, springs back on leave.
+function TiltVisual({ children }) {
+  const ref = useRef(null);
+  const px = useMotionValue(0);
+  const py = useMotionValue(0);
+  const spring = { stiffness: 220, damping: 22, mass: 0.6 };
+  const rotateX = useSpring(useTransform(py, [-0.5, 0.5], [14, -14]), spring);
+  const rotateY = useSpring(useTransform(px, [-0.5, 0.5], [-14, 14]), spring);
+
+  function handleMove(e) {
+    const rect = ref.current.getBoundingClientRect();
+    px.set((e.clientX - rect.left) / rect.width - 0.5);
+    py.set((e.clientY - rect.top) / rect.height - 0.5);
+  }
+  function handleLeave() {
+    px.set(0);
+    py.set(0);
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      className="land-feat-visual-inner"
+      style={{ rotateX, rotateY, transformPerspective: 900 }}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      whileHover={{ scale: 1.05 }}
+      transition={{ duration: 0.3 }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 function AnimatedStat({ num, suffix, label, delay }) {
   const ref = useRef(null);
@@ -452,17 +587,18 @@ export default function LandingPage({ onEnter }) {
   ];
 
   const features = [
-    { icon: <IconSearch />, title: "Slow Query Detection", desc: "Every slow query captured, ranked, and explained in plain language." },
-    { icon: <IconChat />, title: "AI Copilot Chat", desc: "Ask VeloxDiag what's degrading performance — get a direct, actionable answer." },
-    { icon: <IconWrench />, title: "One-click Fixes", desc: "Ready-to-apply fix suggestions for common issues, reviewed before you run them." },
-    { icon: <IconLayers />, title: "Business Context Aware", desc: "Rules and recommendations tuned to how your application is actually used." },
+    { icon: <IconSearch />, title: "Slow Query Detection", desc: "Every slow query captured, ranked, and explained in plain language.", color: "#2563EB" },
+    { icon: <IconChat />, title: "AI Copilot Chat", desc: "Ask VeloxDiag what's degrading performance — get a direct, actionable answer.", color: "#7C3AED" },
+    { icon: <IconWrench />, title: "One-click Fixes", desc: "Ready-to-apply fix suggestions for common issues, reviewed before you run them.", color: "#10B981" },
+    { icon: <IconLayers />, title: "Business Context Aware", desc: "Rules and recommendations tuned to how your application is actually used.", color: "#F59E0B" },
   ];
+  const tintIcon = (icon, color) => cloneElement(icon, { stroke: color });
 
   return (
     <>
       <style>{CSS}</style>
       <div className="land-root">
-        <NetworkBackground />
+        <BackgroundScene intensity="hero" />
 
         <nav className="land-nav">
           <a href="/" className="land-brand">
@@ -586,33 +722,35 @@ export default function LandingPage({ onEnter }) {
             <h2 className="land-section-title">Built for engineers who ship</h2>
             <p className="land-section-sub">No noisy dashboards. Just what's actually wrong, and how to fix it.</p>
           </motion.div>
-          <div>
+          <motion.div
+            className="land-features-3d-wrap"
+            variants={featureContainerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
             {features.map((f, i) => (
               <motion.div
                 className={`land-feature-row${i % 2 === 1 ? " reverse" : ""}`}
                 key={f.title}
-                initial={{ opacity: 0, x: i % 2 === 1 ? 30 : -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                variants={featureItemVariants}
+                style={{ transformStyle: "preserve-3d" }}
               >
                 <div>
-                  <div className="land-feat-icon-wrap">{f.icon}</div>
+                  <div className="land-feat-icon-wrap" style={{ background: `${f.color}17`, borderColor: `${f.color}55` }}>
+                    {tintIcon(f.icon, f.color)}
+                  </div>
                   <div className="land-feat-title">{f.title}</div>
                   <div className="land-feat-desc">{f.desc}</div>
                 </div>
-                <div className="land-feat-visual">
-                  <motion.div
-                    className="land-feat-visual-inner"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div style={{ transform: "scale(1.8)", opacity: 0.85 }}>{f.icon}</div>
-                  </motion.div>
+                <div className="land-feat-visual" style={{ "--panel-accent": f.color }}>
+                  <TiltVisual>
+                    <div style={{ transform: "scale(1.8)" }}>{tintIcon(f.icon, f.color)}</div>
+                  </TiltVisual>
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
 
         {/* CTA BANNER */}
