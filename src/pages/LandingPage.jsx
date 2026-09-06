@@ -40,6 +40,7 @@ const CSS = `
     --section-line: #CBD5E1;
     --shadow-card-hover: rgba(37,99,235,0.25);
     --shadow-tab-active: rgba(15,23,42,0.08);
+    --body-weight: 500; /* light mode: slightly bolder than browser-default 400 so copy stays crisp on a white background */
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -68,6 +69,7 @@ const CSS = `
       --section-line: rgba(255,255,255,0.15);
       --shadow-card-hover: rgba(37,99,235,0.35);
       --shadow-tab-active: rgba(0,0,0,0.4);
+      --body-weight: 400; /* dark mode already reads clearly at normal weight against the dark background */
     }
   }
   * { box-sizing: border-box; }
@@ -77,6 +79,7 @@ const CSS = `
       radial-gradient(ellipse 900px 500px at 50% -10%, var(--bg-glow), transparent 60%),
       var(--bg-page);
     font-family: 'DM Sans', sans-serif; color: var(--text-primary);
+    font-weight: var(--body-weight);
     overflow-x: hidden; position: relative;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
@@ -367,7 +370,7 @@ function useCountUp(target, isInView, duration = 1400) {
 const revealOnScroll = {
   initial: { opacity: 0, y: 28 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-80px" },
+  viewport: { once: false, margin: "-80px" },
   transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] },
 };
 
@@ -426,7 +429,7 @@ function AnimatedStat({ num, suffix, label, delay }) {
   const isInView = useInView(ref, { once: true, margin: "-40px" });
   const count = useCountUp(num, isInView);
   return (
-    <motion.div className="land-stat" ref={ref} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay }}>
+    <motion.div className="land-stat" ref={ref} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, margin: "-40px" }} transition={{ duration: 0.5, delay }}>
       <div className="land-stat-num">{count}<span className="acc">{suffix}</span></div>
       <div className="land-stat-label">{label}</div>
     </motion.div>
@@ -727,7 +730,7 @@ export default function LandingPage({ onEnter }) {
             variants={featureContainerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: false, margin: "-100px" }}
           >
             {features.map((f, i) => (
               <motion.div
