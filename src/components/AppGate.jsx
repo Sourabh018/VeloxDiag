@@ -1,26 +1,49 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Box, Typography, TextField, Button, Alert, IconButton, Tooltip } from "@mui/material";
+import { Box, Typography, TextField, Button, Alert, IconButton, Tooltip, Paper, InputAdornment } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 import BoltIcon from "@mui/icons-material/Bolt";
+import AppsOutlinedIcon from "@mui/icons-material/AppsOutlined";
+import { motion, AnimatePresence } from "motion/react";
 import apiClient from "../api/client";
-import NetworkBackground from "./NetworkBackground";
 
 const SERVER_URL = import.meta.env.VITE_API_URL;
 
-const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500&display=swap');
-  .appgate-root { font-family: 'DM Sans', sans-serif; }
-  .appgate-success-check {
-    width: 32px; height: 32px; border-radius: 8px;
-    background: #ECFDF5; color: #059669;
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
+// Same auto light/dark token system as LandingPage/LoginGate — no toggle, follows OS/browser setting.
+const THEME_CSS = `
+  .lg-root {
+    --bg-page: #F8FAFC;
+    --bg-glow: rgba(37,99,235,0.06);
+    --bg-elevated: #FFFFFF;
+    --bg-field: #FFFFFF;
+    --bg-code: #0F172A;
+    --border-color: #E2E8F0;
+    --border-hover: #CBD5E1;
+    --text-primary: #0F172A;
+    --text-secondary: #64748B;
+    --icon-bg: #EFF6FF;
+    --icon-color: #2563EB;
+    --icon-bg-success: #ECFDF5;
+    --icon-color-success: #059669;
+    --shadow-card: rgba(15,23,42,0.08);
   }
-  .appgate-success-ring {
-    position: absolute; inset: -5px; border-radius: 10px;
-    border: 1.5px solid #A7F3D0;
+  @media (prefers-color-scheme: dark) {
+    .lg-root {
+      --bg-page: #0B1220;
+      --bg-glow: rgba(37,99,235,0.18);
+      --bg-elevated: #121A2B;
+      --bg-field: #0D1420;
+      --bg-code: #060A13;
+      --border-color: rgba(255,255,255,0.1);
+      --border-hover: rgba(255,255,255,0.2);
+      --text-primary: #F1F5F9;
+      --text-secondary: #94A3B8;
+      --icon-bg: rgba(37,99,235,0.15);
+      --icon-color: #60A5FA;
+      --icon-bg-success: rgba(16,185,129,0.15);
+      --icon-color-success: #34D399;
+      --shadow-card: rgba(0,0,0,0.5);
+    }
   }
 `;
 
@@ -86,12 +109,13 @@ veloxdiag:
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#F8FAFC" }}>
-        <motion.div
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <Typography sx={{ fontSize: 14, color: "#64748B", fontWeight: 500 }}>Loading applications...</Typography>
+      <Box
+        className="lg-root"
+        sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "var(--bg-page)" }}
+      >
+        <style>{THEME_CSS}</style>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+          <Typography sx={{ fontSize: 14, color: "var(--text-secondary)", fontWeight: 500 }}>Loading applications...</Typography>
         </motion.div>
       </Box>
     );
@@ -99,111 +123,76 @@ veloxdiag:
 
   if (justCreated) {
     return (
-      <Box className="appgate-root" sx={{ minHeight: "100vh", position: "relative", overflow: "hidden", backgroundColor: "#F8FAFC" }}>
-        <style>{CSS}</style>
-        <NetworkBackground maxHeight={1200} />
-        <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 3, position: "relative", zIndex: 1 }}>
-          <motion.div
-            initial={{ opacity: 0, y: 24, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              width: 560,
-              maxWidth: "100%",
-              padding: 32,
-              borderRadius: 20,
-              background: "rgba(255,255,255,0.9)",
-              backdropFilter: "blur(16px)",
-              WebkitBackdropFilter: "blur(16px)",
-              border: "1px solid #E2E8F0",
-              boxShadow: "0 24px 60px -20px rgba(37,99,235,0.2)",
-            }}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.5 }}
-              style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}
-            >
+      <Box
+        className="lg-root"
+        sx={{
+          minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+          background: "radial-gradient(ellipse 700px 450px at 50% 0%, var(--bg-glow), transparent 65%), var(--bg-page)",
+          padding: 3,
+        }}
+      >
+        <style>{THEME_CSS}</style>
+        <motion.div
+          initial={{ opacity: 0, y: 40, rotateX: -18, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          style={{ perspective: 1200 }}
+        >
+          <Paper elevation={0} sx={{ width: 560, p: 4, borderRadius: "16px", backgroundColor: "var(--bg-elevated)", border: "1px solid var(--border-color)", boxShadow: "0 20px 45px -12px var(--shadow-card)" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
               <motion.div
-                className="appgate-success-check"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.15, duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+                initial={{ scale: 0, rotate: -90 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ duration: 0.5, delay: 0.15, ease: [0.34, 1.56, 0.64, 1] }}
               >
-                <motion.div
-                  className="appgate-success-ring"
-                  initial={{ opacity: 0.7, scale: 1 }}
-                  animate={{ opacity: 0, scale: 1.5 }}
-                  transition={{ delay: 0.35, duration: 0.8, ease: "easeOut" }}
-                />
-                <CheckIcon fontSize="small" />
+                <Box sx={{ width: 32, height: 32, borderRadius: "8px", bgcolor: "var(--icon-bg-success)", color: "var(--icon-color-success)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <CheckIcon fontSize="small" />
+                </Box>
               </motion.div>
-              <Typography sx={{ fontFamily: "'Syne',sans-serif", fontSize: 20, fontWeight: 800, color: "#0F172A" }}>
+              <Typography sx={{ fontSize: 20, fontWeight: 800, color: "var(--text-primary)" }}>
                 "{justCreated.name}" Registered
               </Typography>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25, duration: 0.5 }}>
-              <Typography sx={{ fontSize: 13.5, color: "#64748B", marginBottom: 3 }}>
-                Add <code style={{ color: "#2563EB" }}>veloxdiag-starter</code> to your project's pom.xml, then configure your application.yml:
-              </Typography>
-            </motion.div>
+            </Box>
+            <Typography sx={{ fontSize: 13.5, color: "var(--text-secondary)", marginBottom: 3 }}>
+              Add <code style={{ color: "#60A5FA" }}>veloxdiag-starter</code> to your project's pom.xml, then configure your application.yml:
+            </Typography>
 
             <motion.div
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35, duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              style={{ position: "relative", backgroundColor: "#0F172A", borderRadius: 10, padding: 20, marginBottom: 16 }}
+              transition={{ duration: 0.4, delay: 0.25 }}
             >
-              <Tooltip title={copied ? "Copied!" : "Copy Snippet"}>
-                <IconButton size="small" onClick={handleCopy} sx={{ position: "absolute", top: 10, right: 10, color: "#94A3B8", "&:hover": { color: "#FFFFFF", bgcolor: "rgba(255,255,255,0.1)" } }}>
-                  <AnimatePresence mode="wait">
-                    {copied ? (
-                      <motion.div key="check" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.2 }}>
-                        <CheckIcon fontSize="small" sx={{ color: "#4ADE80" }} />
-                      </motion.div>
-                    ) : (
-                      <motion.div key="copy" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.2 }}>
-                        <ContentCopyIcon fontSize="small" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </IconButton>
-              </Tooltip>
-              <Typography
-                component="pre"
-                sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 12.5, color: "#F8FAFC", whiteSpace: "pre-wrap", margin: 0 }}
-              >
-                {snippet}
-              </Typography>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.5 }}>
-              <Typography sx={{ fontSize: 12, color: "#94A3B8", marginBottom: 3 }}>
-                Your API key is displayed above and is also stored under Settings.
-              </Typography>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.5 }}>
-              <motion.div whileTap={{ scale: 0.97 }}>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={() => setJustCreated(null)}
-                  sx={{
-                    py: 1.2, fontSize: 14, fontWeight: 700, fontFamily: "'Syne',sans-serif",
-                    bgcolor: "#2563EB", borderRadius: "10px", textTransform: "none", boxShadow: "none",
-                    transition: "background 0.2s, transform 0.15s",
-                    "&:hover": { bgcolor: "#1D4ED8", transform: "translateY(-1px)", boxShadow: "0 8px 20px -8px rgba(37,99,235,0.5)" },
-                  }}
+              <Box sx={{ position: "relative", backgroundColor: "var(--bg-code)", borderRadius: "10px", padding: 2.5, mb: 2 }}>
+                <Tooltip title={copied ? "Copied!" : "Copy Snippet"}>
+                  <IconButton size="small" onClick={handleCopy} sx={{ position: "absolute", top: 10, right: 10, color: "#94A3B8", "&:hover": { color: "#FFFFFF", bgcolor: "rgba(255,255,255,0.1)" } }}>
+                    {copied ? <CheckIcon fontSize="small" sx={{ color: "#4ADE80" }} /> : <ContentCopyIcon fontSize="small" />}
+                  </IconButton>
+                </Tooltip>
+                <Typography
+                  component="pre"
+                  sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 12.5, color: "#F8FAFC", whiteSpace: "pre-wrap", margin: 0 }}
                 >
-                  Continue to Dashboard
-                </Button>
-              </motion.div>
+                  {snippet}
+                </Typography>
+              </Box>
             </motion.div>
-          </motion.div>
-        </Box>
+
+            <Typography sx={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 3 }}>
+              Your API key is displayed above and is also stored under Settings.
+            </Typography>
+
+            <motion.div whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={() => setJustCreated(null)}
+                sx={{ py: 1.2, fontSize: 14, fontWeight: 700, bgcolor: "#2563EB", "&:hover": { bgcolor: "#1D4ED8" } }}
+              >
+                Continue to Dashboard
+              </Button>
+            </motion.div>
+          </Paper>
+        </motion.div>
       </Box>
     );
   }
@@ -213,51 +202,39 @@ veloxdiag:
   }
 
   return (
-    <Box className="appgate-root" sx={{ minHeight: "100vh", position: "relative", overflow: "hidden", backgroundColor: "#F8FAFC" }}>
-      <style>{CSS}</style>
-      <NetworkBackground maxHeight={1200} />
-      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 2, position: "relative", zIndex: 1 }}>
-        <motion.div
-          initial={{ opacity: 0, y: 24, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            width: 400,
-            padding: 32,
-            borderRadius: 20,
-            background: "rgba(255,255,255,0.85)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            border: "1px solid #E2E8F0",
-            boxShadow: "0 24px 60px -20px rgba(37,99,235,0.2)",
-            textAlign: "center",
-          }}
-        >
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 }}
-          >
+    <Box
+      className="lg-root"
+      sx={{
+        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+        background: "radial-gradient(ellipse 700px 450px at 50% 0%, var(--bg-glow), transparent 65%), var(--bg-page)",
+        padding: 2,
+      }}
+    >
+      <style>{THEME_CSS}</style>
+      <motion.div
+        initial={{ opacity: 0, y: 40, rotateX: -18, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        style={{ perspective: 1200 }}
+      >
+        <Paper elevation={0} sx={{ width: 400, p: 4, borderRadius: "16px", backgroundColor: "var(--bg-elevated)", border: "1px solid var(--border-color)", boxShadow: "0 20px 45px -12px var(--shadow-card)", textAlign: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 1 }}>
             <motion.div
-              initial={{ rotate: -20, scale: 0.7 }}
-              animate={{ rotate: 0, scale: 1 }}
-              transition={{ delay: 0.15, duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+              initial={{ scale: 0.6, opacity: 0, rotate: -10 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
             >
-              <Box sx={{ width: 38, height: 38, borderRadius: "10px", bgcolor: "#EFF6FF", color: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box sx={{ width: 38, height: 38, borderRadius: "10px", bgcolor: "var(--icon-bg)", color: "var(--icon-color)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <BoltIcon fontSize="medium" />
               </Box>
             </motion.div>
-            <Typography sx={{ fontFamily: "'Syne',sans-serif", fontSize: 22, fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em" }}>
+            <Typography sx={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
               Register Application
             </Typography>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22, duration: 0.5 }}>
-            <Typography sx={{ fontSize: 13.5, color: "#64748B", marginBottom: 3 }}>
-              Enter a name for your application to generate an API ingest key and configuration snippet.
-            </Typography>
-          </motion.div>
+          </Box>
+          <Typography sx={{ fontSize: 13.5, color: "var(--text-secondary)", marginBottom: 3 }}>
+            Enter a name for your application to generate an API ingest key and configuration snippet.
+          </Typography>
 
           <AnimatePresence>
             {error && (
@@ -275,52 +252,51 @@ veloxdiag:
             )}
           </AnimatePresence>
 
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5 }}>
-            <TextField
-              label="Application name"
-              placeholder="e.g. AgroMart or ECommerceApp"
-              fullWidth
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleRegister()}
-              sx={{
-                marginBottom: 3,
-                "& .MuiOutlinedInput-root": {
-                  backgroundColor: "#FFFFFF",
-                  borderRadius: "8px",
-                  fontSize: 14,
-                  transition: "box-shadow 0.2s",
-                  "& fieldset": { borderColor: "#E2E8F0" },
-                  "&:hover fieldset": { borderColor: "#CBD5E1" },
-                  "&.Mui-focused fieldset": { borderColor: "#2563EB", borderWidth: "1.5px" },
-                  "&.Mui-focused": { boxShadow: "0 0 0 4px rgba(37,99,235,0.1)" },
-                },
-                "& .MuiInputLabel-root": { color: "#64748B", fontSize: 14 },
-                "& .MuiInputBase-input": { color: "#0F172A" },
-              }}
-            />
-          </motion.div>
+          <TextField
+            label="Application name"
+            placeholder="e.g. AgroMart or ECommerceApp"
+            fullWidth
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleRegister()}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <AppsOutlinedIcon sx={{ fontSize: 18, color: "var(--icon-color)" }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{
+              marginBottom: 3,
+              "& .MuiOutlinedInput-root": {
+                backgroundColor: "var(--bg-field)",
+                borderRadius: "8px",
+                fontSize: 14,
+                transition: "background-color 0.3s ease",
+                "& fieldset": { borderColor: "var(--border-color)" },
+                "&:hover fieldset": { borderColor: "var(--border-hover)" },
+                "&.Mui-focused fieldset": { borderColor: "#2563EB" },
+              },
+              "& .MuiInputLabel-root": { color: "var(--text-secondary)", fontSize: 14 },
+              "& .MuiInputBase-input": { color: "var(--text-primary)" },
+            }}
+          />
 
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36, duration: 0.5 }}>
-            <motion.div whileTap={{ scale: 0.97 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={handleRegister}
-                disabled={creating}
-                sx={{
-                  py: 1.2, fontSize: 14, fontWeight: 700, fontFamily: "'Syne',sans-serif",
-                  bgcolor: "#2563EB", borderRadius: "10px", textTransform: "none", boxShadow: "none",
-                  transition: "background 0.2s, transform 0.15s",
-                  "&:hover": { bgcolor: "#1D4ED8", transform: "translateY(-1px)", boxShadow: "0 8px 20px -8px rgba(37,99,235,0.5)" },
-                }}
-              >
-                {creating ? "Registering..." : "Register App"}
-              </Button>
-            </motion.div>
+          <motion.div whileHover={{ scale: creating ? 1 : 1.015 }} whileTap={{ scale: creating ? 1 : 0.985 }}>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleRegister}
+              disabled={creating}
+              sx={{ py: 1.2, fontSize: 14, fontWeight: 700, bgcolor: "#2563EB", "&:hover": { bgcolor: "#1D4ED8" } }}
+            >
+              {creating ? "Registering..." : "Register App"}
+            </Button>
           </motion.div>
-        </motion.div>
-      </Box>
+        </Paper>
+      </motion.div>
     </Box>
   );
 }

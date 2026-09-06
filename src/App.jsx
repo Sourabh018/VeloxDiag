@@ -64,10 +64,10 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BackgroundScene intensity="ambient" />
       <LoginGate>
         <AppGate>
           <AppProvider>
+            <BackgroundScene intensity="ambient" />
             <Box sx={{ position: "relative", zIndex: 1 }}>
               <Sidebar
                 activeIndex={activeIndex}
