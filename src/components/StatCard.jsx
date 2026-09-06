@@ -2,6 +2,7 @@ import { Card, CardContent, Typography, Stack, Box } from "@mui/material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { AreaChart, Area, YAxis, ResponsiveContainer } from "recharts";
+import MiniOrb3D from "./3d/MiniOrb3D";
 
 const NEUTRAL = "#2563EB";
 const GOOD = "#059669";
@@ -44,6 +45,7 @@ function StatCard({
   const sparkData = history.map((v, i) => ({ i, v }));
   const sparkColor = statusColor;
   const { bg, border, accent } = STATUS_BG[statusColor] || STATUS_BG[NEUTRAL];
+  const orbIntensity = statusColor === CRIT ? "high" : statusColor === WARN ? "medium" : "low";
 
   return (
     <Card
@@ -87,16 +89,28 @@ function StatCard({
                   width: 34,
                   height: 34,
                   borderRadius: "10px",
-                  bgcolor: bg,
+                  position: "relative",
+                  overflow: "hidden",
                   border: `1px solid ${border}`,
-                  color: accent,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                   flexShrink: 0,
                 }}
               >
-                {icon}
+                <MiniOrb3D color={accent} intensity={orbIntensity} style={{ position: "absolute", inset: 0 }} />
+                <Box
+                  sx={{
+                    position: "relative",
+                    zIndex: 1,
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#FFFFFF",
+                    filter: "drop-shadow(0 1px 2px rgba(15,23,42,0.45))",
+                  }}
+                >
+                  {icon}
+                </Box>
               </Box>
             )}
             <Typography

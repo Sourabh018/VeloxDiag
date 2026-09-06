@@ -1,11 +1,11 @@
 import { Grid, Box, Typography, CircularProgress, Paper, Chip, Stack } from "@mui/material";
-import FavoriteIcon from "@mui/icons-material/Favorite";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import TimerIcon from "@mui/icons-material/Timer";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import Header from "../components/Header";
 import StatCard from "../components/StatCard";
+import GaugeStatCard from "../components/GaugeStatCard";
 import TrendChart from "../components/TrendChart";
 import DashboardAiSummary from "../components/DashboardAiSummary";
 import useDashboardMetrics from "../hooks/useDashboardMetrics";
@@ -289,13 +289,12 @@ function Dashboard({ onMobileMenuToggle }) {
           <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
             {/* Stat Cards */}
             <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-              <StatCard
+              <GaugeStatCard
                 title="Health Score"
                 value={healthScore}
                 unit="/100"
                 thresholds={{ warning: 70, critical: 40 }}
                 reverseThresholds
-                icon={<FavoriteIcon sx={{ fontSize: 18 }} />}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, lg: 3 }}>

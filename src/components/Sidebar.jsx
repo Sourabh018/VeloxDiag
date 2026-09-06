@@ -23,6 +23,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
+import { motion } from "motion/react";
 
 const menuGroups = [
   {
@@ -153,62 +154,70 @@ function SidebarContent({ activeIndex, onSelect }) {
                     key={item.label}
                     selected={isSelected}
                     onClick={() => onSelect(item.index)}
+                    disableRipple
                     sx={{
                       borderRadius: "9px",
                       mb: 0.5,
                       py: 0.9,
                       px: 1.5,
                       position: "relative",
+                      overflow: "hidden",
                       color: isSelected ? "#1D4ED8" : "#64748B",
-                      bgcolor: isSelected ? "#EFF6FF" : "transparent",
+                      bgcolor: "transparent",
                       "&.Mui-selected": {
-                        bgcolor: "#EFF6FF",
+                        bgcolor: "transparent",
                         color: "#1D4ED8",
-                        "&:hover": { bgcolor: "#DBEAFE" },
+                        "&:hover": { bgcolor: "transparent" },
                       },
                       "&:hover": {
-                        bgcolor: isSelected ? "#DBEAFE" : "#F1F5F9",
+                        bgcolor: isSelected ? "transparent" : "#F1F5F9",
                         color: isSelected ? "#1D4ED8" : "#0F172A",
                       },
-                      transition: "all 0.15s ease",
+                      transition: "color 0.15s ease",
                     }}
                   >
-                    {/* Active indicator bar */}
+                    {/* Sliding active pill — shares layoutId across all items, so
+                        moving selection animates it from the old position to the
+                        new one instead of just toggling opacity per item. */}
                     {isSelected && (
-                      <Box
-                        sx={{
+                      <motion.div
+                        layoutId="sidebar-active-pill"
+                        initial={false}
+                        animate={{ opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 480, damping: 38 }}
+                        style={{
                           position: "absolute",
-                          left: 0,
-                          top: "18%",
-                          height: "64%",
-                          width: 3,
-                          bgcolor: "#2563EB",
-                          borderRadius: "0 3px 3px 0",
+                          inset: 0,
+                          borderRadius: 9,
+                          background: "#EFF6FF",
+                          boxShadow: "inset 3px 0 0 0 #2563EB",
                         }}
                       />
                     )}
-                    <ListItemIcon
-                      sx={{
-                        minWidth: 30,
-                        color: isSelected ? "#2563EB" : "#94A3B8",
-                        transition: "color 0.15s ease",
-                      }}
-                    >
-                      {item.icon}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.label}
-                      slotProps={{
-                        primary: {
-                          sx: {
-                            fontSize: 13.5,
-                            fontWeight: isSelected ? 700 : 500,
-                            letterSpacing: "-0.01em",
-                            color: "inherit",
+                    <Box sx={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", width: "100%" }}>
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 30,
+                          color: isSelected ? "#2563EB" : "#94A3B8",
+                          transition: "color 0.15s ease",
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.label}
+                        slotProps={{
+                          primary: {
+                            sx: {
+                              fontSize: 13.5,
+                              fontWeight: isSelected ? 700 : 500,
+                              letterSpacing: "-0.01em",
+                              color: "inherit",
+                            },
                           },
-                        },
-                      }}
-                    />
+                        }}
+                      />
+                    </Box>
                   </ListItemButton>
                 );
               })}

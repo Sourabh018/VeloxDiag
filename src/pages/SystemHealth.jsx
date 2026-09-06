@@ -1,11 +1,10 @@
 import { Box, Typography, Grid, Paper, CircularProgress, Button } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import MemoryIcon from "@mui/icons-material/Memory";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
-import StorageIcon from "@mui/icons-material/Storage";
 import HourglassTopIcon from "@mui/icons-material/HourglassTop";
 import Header from "../components/Header";
 import StatCard from "../components/StatCard";
+import GaugeStatCard from "../components/GaugeStatCard";
 import { useSelectedApp } from "../contexts/AppContext";
 import useSystemHealth from "../hooks/useSystemHealth";
 import {
@@ -208,15 +207,12 @@ function SystemHealth({ onMobileMenuToggle }) {
           <>
             <Grid container spacing={2.5} sx={{ mb: 3 }}>
               <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-                <StatCard
+                <GaugeStatCard
                   title="Heap Used"
-                  value={jvmLatest ? jvmLatest.heapUsedMb : "—"}
+                  value={heapPercent ?? 0}
+                  displayValue={jvmLatest ? jvmLatest.heapUsedMb : "—"}
                   unit={jvmLatest ? `/ ${jvmLatest.heapMaxMb} MB` : ""}
                   thresholds={{ warning: 70, critical: 90 }}
-                  history={jvmHistory.map((m) =>
-                    m.heapMaxMb ? Math.round((m.heapUsedMb / m.heapMaxMb) * 100) : 0
-                  )}
-                  icon={<MemoryIcon sx={{ fontSize: 18 }} />}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -230,15 +226,12 @@ function SystemHealth({ onMobileMenuToggle }) {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-                <StatCard
+                <GaugeStatCard
                   title="Pool Connections"
-                  value={poolLatest ? poolLatest.totalConnections : "—"}
+                  value={poolUtilPercent ?? 0}
+                  displayValue={poolLatest ? poolLatest.totalConnections : "—"}
                   unit={poolLatest?.maxPoolSize ? `/ ${poolLatest.maxPoolSize}` : ""}
                   thresholds={{ warning: 70, critical: 90 }}
-                  history={poolHistory.map((m) =>
-                    m.maxPoolSize ? Math.round((m.totalConnections / m.maxPoolSize) * 100) : 0
-                  )}
-                  icon={<StorageIcon sx={{ fontSize: 18 }} />}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
